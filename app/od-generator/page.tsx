@@ -5,7 +5,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Mail, ArrowLeft, Upload, Download, FileSpreadsheet, CheckCircle, AlertCircle, XCircle, ClipboardCopy, Send } from "lucide-react"
+import { Mail, ArrowLeft, Upload, Download, FileSpreadsheet, CheckCircle, AlertCircle, XCircle, ClipboardCopy, Send, Home } from "lucide-react"
+import Image from "next/image"
 import { FileUpload } from "@/components/file-upload"
 import { DataPreview } from "@/components/data-preview"
 import { parseExcel } from "@/utils/parseExcel"
@@ -150,7 +151,7 @@ export default function ODGeneratorPage() {
 
   const handleSendMail = () => {
     // Use buildGmailComposeUrl for Gmail
-    const { url, tooLong } = buildGmailComposeUrl({ subject: mailSubject, body: mailBody, forceFullGmail: true })
+    const { url, tooLong } = buildGmailComposeUrl({ subject: mailSubject, body: mailBody })
     if (tooLong) {
       setGmailWarning("Mail body too long for web draft. Please copy-paste manually.")
     }
@@ -223,14 +224,20 @@ export default function ODGeneratorPage() {
           <div className="flex items-center justify-between">
             <Link
               href="/"
-              className="flex items-center space-x-3 text-slate-300 hover:text-yellow-400 transition-colors"
+              className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white font-semibold px-6 py-2 rounded-lg flex items-center gap-2 transition-all duration-300"
             >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back to Home</span>
+              <Home className="w-4 h-4" />
+              Dashboard
             </Link>
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center">
-                <Mail className="w-6 h-6 text-slate-900" />
+              <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center overflow-hidden">
+                <Image 
+                  src="/amity-coding-club-logo.png" 
+                  alt="Amity Coding Club Logo" 
+                  width={40} 
+                  height={40}
+                  className="object-contain"
+                />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">OD Generator</h1>
@@ -303,15 +310,17 @@ export default function ODGeneratorPage() {
                   className="w-full bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-slate-900 font-semibold py-3 rounded-xl transition-all duration-300"
                 >
                   <Mail className="w-5 h-5 mr-2" />
-                  Generate OD Mail
+                  OD Mail Preview
                 </Button>
 
                 <Button
                   onClick={handleGmailDraft}
                   disabled={!eventData}
-                  className="w-full bg-gradient-to-r from-red-400 to-red-600 hover:from-red-500 hover:to-red-700 text-white font-semibold py-3 rounded-xl transition-all duration-300"
+                  className="w-full bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 text-white font-semibold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
                 >
-                  <Mail className="w-5 h-5 mr-2" />
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-.904.732-1.636 1.636-1.636h20.728A1.636 1.636 0 0 1 24 5.457zM12 14.182L21.818 6.545H2.182L12 14.182z"/>
+                  </svg>
                   Open in Gmail
                 </Button>
 

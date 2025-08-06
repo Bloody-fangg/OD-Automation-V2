@@ -59,7 +59,7 @@ export function DataPreview({ eventData }: DataPreviewProps) {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-white">Participants ({eventData.students.length})</h3>
-            <Badge variant="secondary" className="bg-yellow-400/20 text-yellow-400">
+            <Badge variant="secondary" className="bg-yellow-400/20 text-yellow-400 hover:bg-yellow-400/30">
               {eventData.students.filter((p: any) => Array.isArray(p.missedLectures) && p.missedLectures.length > 0).length} with missed lectures
             </Badge>
           </div>
@@ -86,13 +86,13 @@ export function DataPreview({ eventData }: DataPreviewProps) {
                       {Array.isArray(student.missedLectures) && student.missedLectures.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
                           {student.missedLectures.map((lecture: any, idx: number) => (
-                            <Badge key={idx} variant="destructive" className="text-xs">
+                            <Badge key={idx} variant="destructive" className="text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30">
                               {typeof lecture === 'string' ? lecture : lecture.subject_name || 'Missed Lecture'}
                             </Badge>
                           ))}
                         </div>
                       ) : (
-                        <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-400">
+                        <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-400 hover:bg-green-500/30">
                           No conflicts
                         </Badge>
                       )}

@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Mail, Users, FileSpreadsheet, ArrowRight } from "lucide-react"
+import { Mail, Users, FileSpreadsheet, ArrowRight, Home, Upload } from "lucide-react"
+import Image from "next/image"
 
 export default function HomePage() {
   return (
@@ -10,20 +11,26 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center">
-                <Mail className="w-6 h-6 text-slate-900" />
+              <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center overflow-hidden">
+                <Image 
+                  src="/amity-coding-club-logo.png" 
+                  alt="Amity Coding Club Logo" 
+                  width={40} 
+                  height={40}
+                  className="object-contain"
+                />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">Amity Coding Club</h1>
                 <p className="text-sm text-slate-400">OD Automation Portal</p>
               </div>
             </div>
-            <nav className="hidden md:flex space-x-6">
-              <Link href="/" className="text-slate-300 hover:text-yellow-400 transition-colors">
-                Home
-              </Link>
-              <Link href="/od-generator" className="text-slate-300 hover:text-yellow-400 transition-colors">
-                Generate OD
+            <nav className="flex space-x-4">
+              <Link href="/od-generator">
+                <Button className="bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-slate-900 font-semibold px-6 py-2 rounded-lg flex items-center gap-2 transition-all duration-300">
+                  <Upload className="w-4 h-4" />
+                  Generate OD
+                </Button>
               </Link>
             </nav>
           </div>
@@ -45,23 +52,16 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+          <div className="flex justify-center mb-16">
             <Link href="/od-generator">
               <Button
                 size="lg"
-                className="bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-slate-900 font-semibold px-8 py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                className="bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-slate-900 font-semibold px-12 py-6 text-xl rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
                 Mark OD
-                <ArrowRight className="ml-2 w-5 h-5" />
+                <ArrowRight className="ml-3 w-6 h-6" />
               </Button>
             </Link>
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white px-8 py-4 text-lg rounded-xl transition-all duration-300 bg-transparent"
-            >
-              Learn More
-            </Button>
           </div>
 
           {/* Features Grid */}
@@ -106,7 +106,7 @@ export default function HomePage() {
       <footer className="border-t border-slate-700/50 bg-slate-900/50 backdrop-blur-sm mt-16">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
-            <p className="text-slate-400">© 2024 Amity Coding Club. Built for efficient event management.</p>
+            <p className="text-slate-400">© 2025 Amity Coding Club. Built for efficient event management.</p>
           </div>
         </div>
       </footer>
