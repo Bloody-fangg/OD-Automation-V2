@@ -1,0 +1,147 @@
+{
+  "Programs": {
+    "B.Tech CSE": {
+      "Semester": "3",
+      "Sections": {
+        "A": {
+          "Courses": [
+            {"subject_code": "CSE202", "subject_name": "Data Structures Through C++", "faculty": "Mr. Gaurav Kumar", "faculty_code": "", "day": "Monday", "time": "09:15-10:10"},
+            {"subject_code": "CSE304", "subject_name": "Database Management Systems", "faculty": "Ms. Nishtha Parashar", "faculty_code": "", "day": "Monday", "time": "10:15-11:10"},
+            {"subject_code": "CSE302", "subject_name": "Python Programming", "faculty": "Dr. Ghanshyam P Dubey", "faculty_code": "", "day": "Monday", "time": "11:15-12:10"},
+            {"subject_code": "MAT301", "subject_name": "Applied Mathematics – III", "faculty": "Dr. Giriraj Kumar Verma", "faculty_code": "", "day": "Monday", "time": "13:15-14:10"},
+            {"subject_code": "BSU343", "subject_name": "Behavioural Science – III", "faculty": "Dr. Jangjeet", "faculty_code": "", "day": "Monday", "time": "14:15-15:10"},
+            {"subject_code": "ECE306", "subject_name": "Digital Electronics and Logic Design", "faculty": "Ms. Rashmi Tikar", "faculty_code": "", "day": "Monday", "time": "16:15-17:10"},
+            
+            {"subject_code": "CSE304", "subject_name": "Database Management Systems", "faculty": "Ms. Nishtha Parashar", "faculty_code": "", "day": "Tuesday", "time": "11:15-12:10"},
+            {"subject_code": "CSE302", "subject_name": "Python Programming", "faculty": "Dr. Ghanshyam P Dubey", "faculty_code": "", "day": "Tuesday", "time": "12:15-13:10"},
+            {"subject_code": "FLU344", "subject_name": "French – III", "faculty": "Dr. Suketu Revar", "faculty_code": "", "day": "Tuesday", "time": "13:15-14:10"},
+
+            {"subject_code": "CSE202", "subject_name": "Data Structures Through C++", "faculty": "Mr. Gaurav Kumar", "faculty_code": "", "day": "Wednesday", "time": "09:15-10:10"},
+            {"subject_code": "CSE302", "subject_name": "Python Programming", "faculty": "Dr. Ghanshyam P Dubey", "faculty_code": "", "day": "Wednesday", "time": "10:15-11:10"},
+            {"subject_code": "MAT301", "subject_name": "Applied Mathematics – III", "faculty": "Dr. Giriraj Kumar Verma", "faculty_code": "", "day": "Wednesday", "time": "13:15-14:10"},
+            {"subject_code": "BSU341", "subject_name": "Communication Skills – III", "faculty": "Dr. Archana Sharma", "faculty_code": "", "day": "Wednesday", "time": "16:15-17:10"},
+            
+            {"subject_code": "CSE202", "subject_name": "Data Structures Through C++", "faculty": "Mr. Gaurav Kumar", "faculty_code": "", "day": "Thursday", "time": "09:15-10:10"},
+            {"subject_code": "MAT301", "subject_name": "Applied Mathematics – III", "faculty": "Dr. Giriraj Kumar Verma", "faculty_code": "", "day": "Thursday", "time": "13:15-14:10"},
+            {"subject_code": "ECE306", "subject_name": "Digital Electronics and Logic Design", "faculty": "Ms. Rashmi Tikar", "faculty_code": "", "day": "Thursday", "time": "14:15-15:10"},
+            
+            {"subject_code": "CSE304", "subject_name": "Database Management Systems", "faculty": "Ms. Nishtha Parashar", "faculty_code": "", "day": "Friday", "time": "10:15-11:10"},
+            {"subject_code": "ECE306", "subject_name": "Digital Electronics and Logic Design", "faculty": "Ms. Rashmi Tikar", "faculty_code": "", "day": "Friday", "time": "14:15-15:10"}
+          ],
+          "Labs": [
+            {"subject_code": "CSE222", "subject_name": "Data Structures through C++ Lab", "faculty": "Mr. Gaurav Kumar", "faculty_code": "", "day": "Monday", "time": "15:15-16:10", "group": "Group 2"},
+            {"subject_code": "CSE324", "subject_name": "Database Management Systems Lab", "faculty": "Jeetendra Singh Bhadoriya", "faculty_code": "", "day": "Tuesday", "time": "09:15-10:10", "group": "Group 1"},
+            {"subject_code": "CSE324", "subject_name": "Database Management Systems Lab", "faculty": "Jeetendra Singh Bhadoriya", "faculty_code": "", "day": "Tuesday", "time": "10:15-11:10", "group": "Group 2"},
+            {"subject_code": "CSE322", "subject_name": "Python Programming Lab", "faculty": "Arunima Shivhare", "faculty_code": "", "day": "Tuesday", "time": "14:15-15:10", "group": "Group 1"},
+            {"subject_code": "CSE322", "subject_name": "Python Programming Lab", "faculty": "Arunima Shivhare", "faculty_code": "", "day": "Wednesday", "time": "14:15-15:10", "group": "Group 2"},
+            {"subject_code": "ECE326", "subject_name": "Digital Electronics and Logic Design Lab", "faculty": "Ms. Rashmi Tikar", "faculty_code": "", "day": "Wednesday", "time": "15:15-16:10", "group": "Group 1"},
+            {"subject_code": "CSE222", "subject_name": "Data Structures through C++ Lab", "faculty": "Mr. Gaurav Kumar", "faculty_code": "", "day": "Friday", "time": "09:15-10:10", "group": "Group 1"},
+            {"subject_code": "ECE326", "subject_name": "Digital Electronics and Logic Design Lab", "faculty": "Ms. Rashmi Tikar", "faculty_code": "", "day": "Friday", "time": "15:15-16:10", "group": "Group 2"}
+          ]
+        },
+        "B": {
+          "Courses": [
+            {"subject_code": "CSE304", "subject_name": "Database Management Systems", "faculty": "Ms. Nishtha Parashar", "faculty_code": "", "day": "Monday", "time": "10:15-11:10"},
+            {"subject_code": "CSE302", "subject_name": "Python Programming", "faculty": "Dr. Ashok Kr Shrivastava", "faculty_code": "", "day": "Monday", "time": "11:15-12:10"},
+            {"subject_code": "ECE306", "subject_name": "Digital Electronics and Logic Design", "faculty": "Ms. Rashmi Tikar", "faculty_code": "", "day": "Monday", "time": "14:15-15:10"},
+            
+            {"subject_code": "CSE202", "subject_name": "Data Structures Through C++", "faculty": "Mr. Gaurav Kumar", "faculty_code": "", "day": "Tuesday", "time": "09:15-10:10"},
+            {"subject_code": "MAT301", "subject_name": "Applied Mathematics – III", "faculty": "Dr. Rajat Vaish", "faculty_code": "", "day": "Tuesday", "time": "13:15-14:10"},
+            
+            {"subject_code": "CSE202", "subject_name": "Data Structures Through C++", "faculty": "Mr. Gaurav Kumar", "faculty_code": "", "day": "Wednesday", "time": "09:15-10:10"},
+            {"subject_code": "CSE304", "subject_name": "Database Management Systems", "faculty": "Ms. Nishtha Parashar", "faculty_code": "", "day": "Wednesday", "time": "10:15-11:10"},
+            {"subject_code": "CSE302", "subject_name": "Python Programming", "faculty": "Dr. Ashok Kr Shrivastava", "faculty_code": "", "day": "Wednesday", "time": "11:15-12:10"},
+            {"subject_code": "BSU343", "subject_name": "Behavioural Science – III", "faculty": "Dr. Rituparna Das", "faculty_code": "", "day": "Wednesday", "time": "14:15-15:10"},
+            {"subject_code": "FLU344", "subject_name": "French – III", "faculty": "Dr. Suketu Revar", "faculty_code": "", "day": "Wednesday", "time": "15:15-16:10"},
+
+            {"subject_code": "CSE202", "subject_name": "Data Structures Through C++", "faculty": "Mr. Gaurav Kumar", "faculty_code": "", "day": "Thursday", "time": "09:15-10:10"},
+            {"subject_code": "MAT301", "subject_name": "Applied Mathematics – III", "faculty": "Dr. Rajat Vaish", "faculty_code": "", "day": "Thursday", "time": "13:15-14:10"},
+            {"subject_code": "ECE306", "subject_name": "Digital Electronics and Logic Design", "faculty": "Ms. Rashmi Tikar", "faculty_code": "", "day": "Thursday", "time": "14:15-15:10"},
+            {"subject_code": "BSU341", "subject_name": "Communication Skills – III", "faculty": "Dr. Monika Saxena", "faculty_code": "", "day": "Thursday", "time": "16:15-17:10"},
+            
+            {"subject_code": "CSE304", "subject_name": "Database Management Systems", "faculty": "Ms. Nishtha Parashar", "faculty_code": "", "day": "Friday", "time": "09:15-10:10"},
+            {"subject_code": "CSE302", "subject_name": "Python Programming", "faculty": "Dr. Ashok Kr Shrivastava", "faculty_code": "", "day": "Friday", "time": "10:15-11:10"},
+            {"subject_code": "MAT301", "subject_name": "Applied Mathematics – III", "faculty": "Dr. Rajat Vaish", "faculty_code": "", "day": "Friday", "time": "13:15-14:10"},
+            {"subject_code": "ECE306", "subject_name": "Digital Electronics and Logic Design", "faculty": "Ms. Rashmi Tikar", "faculty_code": "", "day": "Friday", "time": "14:15-15:10"}
+          ],
+          "Labs": [
+            {"subject_code": "CSE324", "subject_name": "Database Management Systems Lab", "faculty": "Ms. Nishtha Parashar", "faculty_code": "", "day": "Monday", "time": "09:15-10:10", "group": "Group 1"},
+            {"subject_code": "CSE322", "subject_name": "Python Programming Lab", "faculty": "Dr. Ashok Kr Shrivastava", "faculty_code": "", "day": "Monday", "time": "12:15-13:10", "group": "Group 2"},
+            {"subject_code": "CSE222", "subject_name": "Data Structures through C++ Lab", "faculty": "Mr. Gaurav Kumar", "faculty_code": "", "day": "Tuesday", "time": "10:15-11:10", "group": "Group 2"},
+            {"subject_code": "CSE324", "subject_name": "Database Management Systems Lab", "faculty": "Ms. Nishtha Parashar", "faculty_code": "", "day": "Tuesday", "time": "11:15-12:10", "group": "Group 2"},
+            {"subject_code": "CSE322", "subject_name": "Python Programming Lab", "faculty": "Dr. Ashok Kr Shrivastava", "faculty_code": "", "day": "Tuesday", "time": "14:15-15:10", "group": "Group 1"},
+            {"subject_code": "ECE326", "subject_name": "Digital Electronics and Logic Design Lab", "faculty": "Ms. Rashmi Tikar", "faculty_code": "", "day": "Tuesday", "time": "15:15-16:10", "group": "Group 1"},
+            {"subject_code": "ECE326", "subject_name": "Digital Electronics and Logic Design Lab", "faculty": "Ms. Rashmi Tikar", "faculty_code": "", "day": "Friday", "time": "15:15-16:10", "group": "Group 2"},
+            {"subject_code": "CSE222", "subject_name": "Data Structures through C++ Lab", "faculty": "Mr. Gaurav Kumar", "faculty_code": "", "day": "Friday", "time": "16:15-17:10", "group": "Group 1"}
+          ]
+        },
+        "C": {
+          "Courses": [
+            {"subject_code": "MAT301", "subject_name": "Applied Mathematics – III", "faculty": "Dr. Rajat Vaish", "faculty_code": "", "day": "Monday", "time": "13:15-14:10"},
+            {"subject_code": "BSU341", "subject_name": "Communication Skills – III", "faculty": "CS_VF", "faculty_code": "", "day": "Monday", "time": "14:15-15:10"},
+            {"subject_code": "FLU344", "subject_name": "French – III", "faculty": "Mr. Balkishan", "faculty_code": "", "day": "Monday", "time": "15:15-16:10"},
+            {"subject_code": "ECE306", "subject_name": "Digital Electronics and Logic Design", "faculty": "Ms. Rashmi Tikar", "faculty_code": "", "day": "Monday", "time": "16:15-17:10"},
+            {"subject_code": "CSE302/CSE510", "subject_name": "Python Programming", "faculty": "Dr. Ashok Kr Shrivastava", "faculty_code": "", "day": "Tuesday", "time": "09:15-10:10"},
+            {"subject_code": "CSE202", "subject_name": "Data Structures Through C++", "faculty": "A.Daniel", "faculty_code": "", "day": "Tuesday", "time": "16:15-17:10"},
+
+            {"subject_code": "CSE202", "subject_name": "Data Structures Through C++", "faculty": "A.Daniel", "faculty_code": "", "day": "Wednesday", "time": "09:15-10:10"},
+            {"subject_code": "CSE304", "subject_name": "Database Management Systems", "faculty": "Ms. Nishtha Parashar", "faculty_code": "", "day": "Wednesday", "time": "10:15-11:10"},
+            {"subject_code": "CSE304", "subject_name": "Database Management Systems", "faculty": "Ms. Nishtha Parashar", "faculty_code": "", "day": "Wednesday", "time": "11:15-12:10"},
+            {"subject_code": "MAT301", "subject_name": "Applied Mathematics – III", "faculty": "Dr. Rajat Vaish", "faculty_code": "", "day": "Wednesday", "time": "13:15-14:10"},
+
+            {"subject_code": "ECE306", "subject_name": "Digital Electronics and Logic Design", "faculty": "Ms. Rashmi Tikar", "faculty_code": "", "day": "Thursday", "time": "14:15-15:10"},
+            {"subject_code": "CSE302/CSE510", "subject_name": "Python Programming", "faculty": "Dr. Ashok Kr Shrivastava", "faculty_code": "", "day": "Thursday", "time": "15:15-16:10"},
+
+            {"subject_code": "CSE202", "subject_name": "Data Structures Through C++", "faculty": "A.Daniel", "faculty_code": "", "day": "Friday", "time": "09:15-10:10"},
+            {"subject_code": "MAT301", "subject_name": "Applied Mathematics – III", "faculty": "Dr. Rajat Vaish", "faculty_code": "", "day": "Friday", "time": "13:15-14:10"},
+            {"subject_code": "BSU343", "subject_name": "Behavioural Science – III", "faculty": "Dr. Vikas Sharma", "faculty_code": "", "day": "Friday", "time": "14:15-15:10"},
+            {"subject_code": "CSE302/CSE510", "subject_name": "Python Programming", "faculty": "Dr. Ashok Kr Shrivastava", "faculty_code": "", "day": "Friday", "time": "16:15-17:10"}
+          ],
+          "Labs": [
+            {"subject_code": "CSE324", "subject_name": "Database Management Systems Lab", "faculty": "Jeetendra Singh Bhadoriya", "faculty_code": "", "day": "Thursday", "time": "09:15-10:10", "group": "Group 1"},
+            {"subject_code": "CSE324", "subject_name": "Database Management Systems Lab", "faculty": "Jeetendra Singh Bhadoriya", "faculty_code": "", "day": "Thursday", "time": "10:15-11:10", "group": "Group 2"},
+            {"subject_code": "ECE326", "subject_name": "Digital Electronics and Logic Design Lab", "faculty": "Dr. Rinkoo Bhatia", "faculty_code": "", "day": "Thursday", "time": "16:15-17:10", "group": "Group 1"},
+            {"subject_code": "CSE322/CSE530", "subject_name": "Python Programming Lab", "faculty": "Arunima Shivhare", "faculty_code": "", "day": "Tuesday", "time": "14:15-15:10", "group": "Group 2"},
+            {"subject_code": "ECE326", "subject_name": "Digital Electronics and Logic Design Lab", "faculty": "Dr. Rinkoo Bhatia", "faculty_code": "", "day": "Friday", "time": "15:15-16:10", "group": "Group 2"}
+          ]
+        },
+        "D": {
+          "Courses": [
+            {"subject_code": "CSE202", "subject_name": "Data Structures Through C++", "faculty": "Dr. Samta Jain Goyal", "faculty_code": "", "day": "Monday", "time": "09:15-10:10"},
+            {"subject_code": "CSE304", "subject_name": "Database Management Systems", "faculty": "Dr. Dinesh Sharma", "faculty_code": "", "day": "Monday", "time": "10:15-11:10"},
+            {"subject_code": "CSE302", "subject_name": "Python Programming", "faculty": "Dr. Ghanshyam P Dubey", "faculty_code": "", "day": "Monday", "time": "12:15-13:10"},
+            {"subject_code": "MAT301", "subject_name": "Applied Mathematics – III", "faculty": "Dr. Reetu Kumari", "faculty_code": "", "day": "Monday", "time": "13:15-14:10"},
+
+            {"subject_code": "CSE304", "subject_name": "Database Management Systems", "faculty": "Dr. Dinesh Sharma", "faculty_code": "", "day": "Tuesday", "time": "09:15-10:10"},
+            {"subject_code": "CSE302", "subject_name": "Python Programming", "faculty": "Dr. Ghanshyam P Dubey", "faculty_code": "", "day": "Tuesday", "time": "10:15-11:10"},
+            {"subject_code": "MAT301", "subject_name": "Applied Mathematics – III", "faculty": "Dr. Reetu Kumari", "faculty_code": "", "day": "Tuesday", "time": "13:15-14:10"},
+            {"subject_code": "BSU343", "subject_name": "Behavioural Science – III", "faculty": "Dr. Jangjeet", "faculty_code": "", "day": "Tuesday", "time": "14:15-15:10"},
+
+            {"subject_code": "CSE304", "subject_name": "Database Management Systems", "faculty": "Dr. Dinesh Sharma", "faculty_code": "", "day": "Wednesday", "time": "09:15-10:10"},
+            {"subject_code": "CSE302", "subject_name": "Python Programming", "faculty": "Dr. Ghanshyam P Dubey", "faculty_code": "", "day": "Wednesday", "time": "10:15-11:10"},
+            {"subject_code": "MAT301", "subject_name": "Applied Mathematics – III", "faculty": "Dr. Reetu Kumari", "faculty_code": "", "day": "Wednesday", "time": "13:15-14:10"},
+            {"subject_code": "ECE306", "subject_name": "Digital Electronics and Logic Design", "faculty": "Dr. Ajay Kr Dadoria", "faculty_code": "", "day": "Wednesday", "time": "14:15-15:10"},
+
+            {"subject_code": "CSE202", "subject_name": "Data Structures Through C++", "faculty": "Dr. Samta Jain Goyal", "faculty_code": "", "day": "Thursday", "time": "09:15-10:10"},
+            {"subject_code": "BSU341", "subject_name": "Communication Skills – III", "faculty": "CS_VF", "faculty_code": "", "day": "Thursday", "time": "15:15-16:10"},
+            {"subject_code": "ECE306", "subject_name": "Digital Electronics and Logic Design", "faculty": "Dr. Ajay Kr Dadoria", "faculty_code": "", "day": "Thursday", "time": "16:15-17:10"},
+
+            {"subject_code": "CSE202", "subject_name": "Data Structures Through C++", "faculty": "Dr. Samta Jain Goyal", "faculty_code": "", "day": "Friday", "time": "09:15-10:10"},
+            {"subject_code": "FLU344", "subject_name": "French – III", "faculty": "Dr. Neelam Singh Tomar", "faculty_code": "", "day": "Friday", "time": "15:15-16:10"},
+            {"subject_code": "ECE306", "subject_name": "Digital Electronics and Logic Design", "faculty": "Dr. Ajay Kr Dadoria", "faculty_code": "", "day": "Friday", "time": "16:15-17:10"}
+          ],
+          "Labs": [
+            {"subject_code": "CSE324", "subject_name": "Database Management Systems Lab", "faculty": "Jeetendra Singh Bhadoriya", "faculty_code": "", "day": "Monday", "time": "11:15-12:10", "group": "Group 1"},
+            {"subject_code": "CSE322", "subject_name": "Python Programming Lab", "faculty": "Arunima Shivhare", "faculty_code": "", "day": "Monday", "time": "15:15-16:10", "group": "Group 2"},
+            {"subject_code": "CSE222", "subject_name": "Data Structures through C++ Lab", "faculty": "Kiran Tomar", "faculty_code": "", "day": "Monday", "time": "16:15-17:10", "group": "Group 1"},
+            {"subject_code": "ECE326", "subject_name": "Digital Electronics and Logic Design Lab", "faculty": "Dr. Narendra Kr Garg", "faculty_code": "", "day": "Tuesday", "time": "15:15-16:10", "group": "Group 2"},
+            {"subject_code": "CSE222", "subject_name": "Data Structures through C++ Lab", "faculty": "Kiran Tomar", "faculty_code": "", "day": "Thursday", "time": "10:15-11:10", "group": "Group 2"},
+            {"subject_code": "ECE326", "subject_name": "Digital Electronics and Logic Design Lab", "faculty": "Dr. Narendra Kr Garg", "faculty_code": "", "day": "Thursday", "time": "11:15-12:10", "group": "Group 1"},
+            {"subject_code": "CSE324", "subject_name": "Database Management Systems Lab", "faculty": "Jeetendra Singh Bhadoriya", "faculty_code": "", "day": "Friday", "time": "10:15-11:10", "group": "Group 2"},
+            {"subject_code": "CSE322", "subject_name": "Python Programming Lab", "faculty": "Arunima Shivhare", "faculty_code": "", "day": "Friday", "time": "11:15-12:10", "group": "Group 1"}
+          ]
+        }
+      }
+    }
+  }
+} 

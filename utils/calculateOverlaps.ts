@@ -1,6 +1,24 @@
 import { Student, MissedLecture, StudentWithMissedLectures, TimeSlot, Timetable, Course, Lab } from '@/types/od';
 
 /**
+ * Loads timetable data from the JSON file
+ * @returns Promise<Timetable> - Timetable data
+ */
+export async function loadTimetable(): Promise<Timetable> {
+  try {
+    const response = await fetch('/data/timetable.json');
+    if (!response.ok) {
+      throw new Error('Failed to load timetable data');
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error loading timetable:', error);
+    return { Programs: {} };
+  }
+}
+
+/**
  * Calculates missed lectures for students based on event time and timetable
  * @param students - Array of students
  * @param eventTime - Event time string (e.g., "09:15–10:10_10:15–11:10")
@@ -66,91 +84,20 @@ export function calculateMissedLectures(
  * @returns Array of TimeSlot objects
  */
 function parseEventTimeSlots(eventTime: string): TimeSlot[] {
-  console.log(`⏰ Parsing event time: "${eventTime}"`);
-  
-  if (!eventTime) {
-    console.warn('⚠️ No event time provided');
-    return [];
-  }
+  if (!eventTime) return [];
 
-  const slots: TimeSlot[] = [];
-  
-  // Split by underscore or comma to handle multiple time slots
-  const timeRanges = eventTime.split(/[_,|]/).map(t => t.trim());
-  
-  timeRanges.forEach((range, index) => {
-    console.log(`🔍 Processing time range ${index + 1}: "${range}"`);
-    
-    // Handle different separators (–, -, to, etc.)
-    const timeParts = range.split(/[–\-]|to/i).map(t => t.trim());
-    
-    if (timeParts.length >= 2) {
-      const startTime = parseTimeToMinutes(timeParts[0]);
-      const endTime = parseTimeToMinutes(timeParts[1]);
-      
-      if (startTime !== -1 && endTime !== -1) {
-        slots.push({ start: startTime, end: endTime });
-        console.log(`✅ Added slot: ${timeParts[0]} (${startTime}min) - ${timeParts[1]} (${endTime}min)`);
-      } else {
-        console.warn(`⚠️ Could not parse time range: "${range}"`);
-      }
-    } else {
-      console.warn(`⚠️ Invalid time range format: "${range}"`);
-    }
+  const slots = eventTime.split(/[_\s]+/).filter(Boolean);
+  return slots.map(slot => {
+    const [start, end] = slot.split('–').map(time => time.trim());
+    return { start, end };
   });
-
-  console.log(`📋 Parsed ${slots.length} time slots`);
-  return slots;
-}
-
-/**
- * Converts time string to minutes from midnight
- * @param timeStr - Time string (e.g., "09:15", "9:15 AM")
- * @returns Minutes from midnight, or -1 if invalid
- */
-function parseTimeToMinutes(timeStr: string): number {
-  if (!timeStr) return -1;
-  
-  const cleaned = timeStr.trim().toUpperCase();
-  
-  // Handle 24-hour format (HH:MM)
-  const match24 = cleaned.match(/^(\d{1,2}):(\d{2})$/);
-  if (match24) {
-    const hours = parseInt(match24[1], 10);
-    const minutes = parseInt(match24[2], 10);
-    
-    if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
-      return hours * 60 + minutes;
-    }
-  }
-  
-  // Handle 12-hour format (H:MM AM/PM)
-  const match12 = cleaned.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/);
-  if (match12) {
-    let hours = parseInt(match12[1], 10);
-    const minutes = parseInt(match12[2], 10);
-    const period = match12[3];
-    
-    if (period === 'PM' && hours !== 12) {
-      hours += 12;
-    } else if (period === 'AM' && hours === 12) {
-      hours = 0;
-    }
-    
-    if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
-      return hours * 60 + minutes;
-    }
-  }
-  
-  console.warn(`⚠️ Could not parse time: "${timeStr}"`);
-  return -1;
 }
 
 /**
  * Finds missed lectures for a specific student
- * @param student - Student object
+ * @param student - Student data
  * @param eventSlots - Event time slots
- * @param eventDay - Day of the week
+ * @param eventDay - Event day
  * @param timetable - Timetable data
  * @returns Array of missed lectures
  */
@@ -161,171 +108,159 @@ function findMissedLecturesForStudent(
   timetable: Timetable
 ): MissedLecture[] {
   const missedLectures: MissedLecture[] = [];
-  
-  // Find student's timetable
-  const programTimetable = timetable[student.normalizedProgram];
-  if (!programTimetable) {
-    console.warn(`⚠️ No timetable found for program: ${student.normalizedProgram}`);
+
+  // Find the student's program in timetable
+  const programKey = findProgramKey(student.normalizedProgram, timetable);
+  if (!programKey) {
+    console.log(`⚠️  Program not found: ${student.normalizedProgram}`);
     return missedLectures;
   }
-  
-  const semesterTimetable = programTimetable[student.semester];
-  if (!semesterTimetable) {
-    console.warn(`⚠️ No timetable found for semester: ${student.semester}`);
+
+  const program = timetable.Programs[programKey];
+  if (!program) return missedLectures;
+
+  // Find the student's section
+  const section = program.Sections[student.section];
+  if (!section) {
+    console.log(`⚠️  Section not found: ${student.section} for ${programKey}`);
     return missedLectures;
   }
-  
-  const sectionTimetable = semesterTimetable[student.section];
-  if (!sectionTimetable) {
-    console.warn(`⚠️ No timetable found for section: ${student.section}`);
-    return missedLectures;
-  }
-  
-  console.log(`✅ Found timetable for ${student.normalizedProgram} - Sem ${student.semester} - ${student.section}`);
-  
-  // Check courses for overlaps
-  if (sectionTimetable.courses) {
-    sectionTimetable.courses.forEach(course => {
-      if (hasTimeOverlap(course.time, eventSlots, eventDay)) {
-        missedLectures.push({
-          subject_name: course.subject_name,
-          faculty: course.faculty,
-          time: course.time,
-          room: course.room,
-          type: 'course'
-        });
-        console.log(`❌ Course overlap: ${course.subject_name} at ${course.time}`);
-      }
+
+  // Check courses and labs for the event day
+  const dayCourses = section.Courses.filter(course => course.day === eventDay);
+  const dayLabs = section.Labs.filter(lab => lab.day === eventDay);
+
+  console.log(`📚 Found ${dayCourses.length} courses and ${dayLabs.length} labs for ${eventDay}`);
+
+  // For each event time slot, find overlapping lectures/labs
+  eventSlots.forEach(eventSlot => {
+    console.log(`⏰ Checking event slot: ${eventSlot.start} - ${eventSlot.end}`);
+    
+    // Check courses - include all overlapping courses
+    const overlappingCourses = dayCourses.filter(course => {
+      return isTimeOverlapping(eventSlot, course.time);
     });
-  }
-  
-  // Check labs for overlaps
-  if (sectionTimetable.labs) {
-    sectionTimetable.labs.forEach(lab => {
-      if (hasTimeOverlap(lab.time, eventSlots, eventDay)) {
-        missedLectures.push({
-          subject_name: lab.subject_name,
-          faculty: lab.faculty,
-          time: lab.time,
-          room: lab.room,
-          type: 'lab'
-        });
-        console.log(`❌ Lab overlap: ${lab.subject_name} at ${lab.time}`);
+
+    // Check labs - only include if student's group matches or if both groups are affected
+    const overlappingLabs = dayLabs.filter(lab => {
+      if (!isTimeOverlapping(eventSlot, lab.time)) return false;
+      
+      // If student has a group, only include if it matches
+      if (student.group) {
+        return lab.group === `Group ${student.group}`;
       }
+      
+      // If no group specified, include all labs for this time slot
+      return true;
     });
-  }
-  
+
+    console.log(`📖 Found ${overlappingCourses.length} overlapping courses`);
+    console.log(`🔬 Found ${overlappingLabs.length} overlapping labs for group ${student.group || 'all'}`);
+
+    // Add all overlapping courses to missed lectures
+    overlappingCourses.forEach(course => {
+      const missedLecture: MissedLecture = {
+        subject_code: course.subject_code || '',
+        subject_name: course.subject_name || '',
+        faculty: course.faculty || '',
+        faculty_code: course.faculty_code || '', // Empty for now, ready for future expansion
+        time: course.time || '',
+        group: '', // No group for courses
+        day: eventDay
+      };
+
+      missedLectures.push(missedLecture);
+      console.log(`❌ Added missed course: ${course.subject_name} (${course.faculty}) at ${course.time}`);
+    });
+
+    // Add all overlapping labs to missed lectures
+    overlappingLabs.forEach(lab => {
+      const missedLecture: MissedLecture = {
+        subject_code: lab.subject_code || '',
+        subject_name: lab.subject_name || '',
+        faculty: lab.faculty || '',
+        faculty_code: lab.faculty_code || '', // Empty for now, ready for future expansion
+        time: lab.time || '',
+        group: lab.group || '', // Include group for labs
+        day: eventDay
+      };
+
+      missedLectures.push(missedLecture);
+      console.log(`❌ Added missed lab: ${lab.subject_name} (${lab.faculty}) at ${lab.time} for ${lab.group}`);
+    });
+  });
+
   return missedLectures;
 }
 
 /**
- * Checks if a lecture time overlaps with event time slots
- * @param lectureTime - Lecture time string
- * @param eventSlots - Event time slots
- * @param eventDay - Day of the week
- * @returns Boolean indicating overlap
+ * Finds the correct program key in timetable
+ * @param normalizedProgram - Normalized program name
+ * @param timetable - Timetable data
+ * @returns Program key or null
  */
-function hasTimeOverlap(lectureTime: string, eventSlots: TimeSlot[], eventDay: string): boolean {
-  if (!lectureTime || eventSlots.length === 0) return false;
+function findProgramKey(normalizedProgram: string, timetable: Timetable): string | null {
+  const programKeys = Object.keys(timetable.Programs);
   
-  // Parse lecture time - format might be "Monday 09:15-10:10" or just "09:15-10:10"
-  const lectureTimeInfo = parseLectureTime(lectureTime);
-  
-  if (!lectureTimeInfo) {
-    console.warn(`⚠️ Could not parse lecture time: "${lectureTime}"`);
-    return false;
-  }
-  
-  // Check if the day matches (if specified in lecture time)
-  if (lectureTimeInfo.day && lectureTimeInfo.day.toLowerCase() !== eventDay.toLowerCase()) {
-    return false;
-  }
-  
-  // Check for time overlap with any event slot
-  return eventSlots.some(eventSlot => {
-    const overlap = (
-      lectureTimeInfo.start < eventSlot.end && 
-      lectureTimeInfo.end > eventSlot.start
+  // Exact match first
+  const exactMatch = programKeys.find(key => 
+    key.toLowerCase() === normalizedProgram.toLowerCase()
+  );
+  if (exactMatch) return exactMatch;
+
+  // Fuzzy match with common variations
+  const fuzzyMatch = programKeys.find(key => {
+    const keyLower = key.toLowerCase();
+    const programLower = normalizedProgram.toLowerCase();
+    
+    // Handle common variations
+    const variations = [
+      keyLower,
+      keyLower.replace(/\s+/g, ''),
+      keyLower.replace(/[()]/g, ''),
+      keyLower.replace(/\s*\([^)]*\)\s*/g, ''),
+      keyLower.replace(/b\.?tech/i, 'btech'),
+      keyLower.replace(/btech/i, 'b.tech'),
+      keyLower.replace(/cse/i, 'computer science'),
+      keyLower.replace(/it/i, 'information technology'),
+      keyLower.replace(/bca/i, 'bachelor of computer applications')
+    ];
+    
+    return variations.some(variant => 
+      variant.includes(programLower) || programLower.includes(variant)
     );
-    
-    if (overlap) {
-      console.log(`⚠️ Time overlap detected: Lecture ${lectureTimeInfo.start}-${lectureTimeInfo.end} vs Event ${eventSlot.start}-${eventSlot.end}`);
-    }
-    
-    return overlap;
   });
+
+  return fuzzyMatch || null;
 }
 
 /**
- * Parses lecture time string to extract day and time range
+ * Checks if two time slots overlap
+ * @param eventSlot - Event time slot
  * @param lectureTime - Lecture time string
- * @returns Object with day, start, and end times, or null if invalid
+ * @returns boolean indicating overlap
  */
-function parseLectureTime(lectureTime: string): { day?: string; start: number; end: number } | null {
-  if (!lectureTime) return null;
+function isTimeOverlapping(eventSlot: TimeSlot, lectureTime: string): boolean {
+  if (!lectureTime) return false;
+
+  const [lectureStart, lectureEnd] = lectureTime.split('–').map(time => time.trim());
   
-  const cleaned = lectureTime.trim();
-  
-  // Check if day is included (e.g., "Monday 09:15-10:10")
-  const dayMatch = cleaned.match(/^(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+(.+)$/i);
-  
-  let timeStr = cleaned;
-  let day: string | undefined;
-  
-  if (dayMatch) {
-    day = dayMatch[1];
-    timeStr = dayMatch[2];
-  }
-  
-  // Parse time range (09:15-10:10 or 09:15–10:10)
-  const timeRangeMatch = timeStr.match(/^(\d{1,2}:\d{2})\s*[–\-]\s*(\d{1,2}:\d{2})$/);
-  
-  if (!timeRangeMatch) {
-    return null;
-  }
-  
-  const startTime = parseTimeToMinutes(timeRangeMatch[1]);
-  const endTime = parseTimeToMinutes(timeRangeMatch[2]);
-  
-  if (startTime === -1 || endTime === -1) {
-    return null;
-  }
-  
-  return {
-    day,
-    start: startTime,
-    end: endTime
-  };
+  // Convert times to minutes for comparison
+  const eventStartMinutes = timeToMinutes(eventSlot.start);
+  const eventEndMinutes = timeToMinutes(eventSlot.end);
+  const lectureStartMinutes = timeToMinutes(lectureStart);
+  const lectureEndMinutes = timeToMinutes(lectureEnd);
+
+  // Check for overlap
+  return eventStartMinutes < lectureEndMinutes && eventEndMinutes > lectureStartMinutes;
 }
 
 /**
- * Loads timetable from JSON file
- * @param filePath - Path to timetable.json file
- * @returns Promise<Timetable> - Loaded timetable data
+ * Converts time string to minutes
+ * @param time - Time string (e.g., "09:15")
+ * @returns Minutes since midnight
  */
-export async function loadTimetable(filePath: string = '/data/timetable.json'): Promise<Timetable> {
-  console.log(`📚 Loading timetable from: ${filePath}`);
-  
-  try {
-    // In a real Next.js app, you might use fs.readFile or fetch
-    // For now, we'll assume the timetable is available as a static file
-    const response = await fetch(filePath);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to load timetable: ${response.statusText}`);
-    }
-    
-    const timetable: Timetable = await response.json();
-    console.log('✅ Timetable loaded successfully');
-    
-    // Log available programs for debugging
-    const programs = Object.keys(timetable);
-    console.log(`📋 Available programs: ${programs.join(', ')}`);
-    
-    return timetable;
-    
-  } catch (error) {
-    console.error('❌ Error loading timetable:', error);
-    throw new Error(`Failed to load timetable: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
+function timeToMinutes(time: string): number {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
 }

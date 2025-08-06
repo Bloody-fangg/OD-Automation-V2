@@ -29,101 +29,103 @@ export function generateEmail(
  * @returns Email subject string
  */
 function generateEmailSubject(metadata: EventMetadata): string {
-  const eventName = metadata.eventName || 'Event';
-  const eventDate = formatDateForSubject(metadata.eventDate);
-  
-  return `OD Request – ${eventName} (${eventDate})`;
+  return `OD Request – ${metadata.eventName} (${metadata.eventDate})`;
 }
 
 /**
- * Generates email body content
+ * Generates email body with proper formatting and grouping
  * @param metadata - Event metadata
  * @param groupedData - Students grouped by program-section
  * @returns Email body string
  */
-function generateEmailBody(
-  metadata: EventMetadata,
-  groupedData: GroupedStudentData[]
-): string {
-  console.log('📝 Generating email body...');
-  
-  const lines: string[] = [];
-  
-  // Email greeting
-  lines.push('Respected Sir/Ma\'am,');
-  lines.push('');
-  
-  // Introduction
-  lines.push('I hope this email finds you in good health and spirits.');
-  lines.push('');
+function generateEmailBody(metadata: EventMetadata, groupedData: GroupedStudentData[]): string {
+  let body = `Dear Faculty,\n\n`;
+  body += `I hope this email finds you well.\n\n`;
+  body += `Please grant On Duty (OD) approval for the following students who participated in the event:\n\n`;
   
   // Event details
-  lines.push('I am writing to request an Official Duty (OD) for the following event:');
-  lines.push('');
-  lines.push(`Event Name: ${metadata.eventName || 'N/A'}`);
-  lines.push(`Date: ${metadata.eventDate || 'N/A'}`);
-  lines.push(`Time: ${metadata.eventTime || 'N/A'}`);
-  lines.push(`Venue: ${metadata.eventVenue || 'N/A'}`);
+  body += `Event Name: ${metadata.eventName}\n`;
+  body += `Coordinator: ${metadata.coordinator}\n`;
+  body += `Date: ${metadata.eventDate}\n`;
+  body += `Day: ${metadata.day}\n`;
+  body += `Venue: ${metadata.eventVenue || metadata.place}\n`;
+  body += `Time: ${metadata.eventTime}\n\n`;
   
-  if (metadata.organizingDepartment) {
-    lines.push(`Organizing Department: ${metadata.organizingDepartment}`);
-  }
-  
-  if (metadata.facultyIncharge) {
-    lines.push(`Faculty In-charge: ${metadata.facultyIncharge}`);
-  }
-  
-  if (metadata.contactDetails) {
-    lines.push(`Contact Details: ${metadata.contactDetails}`);
-  }
-  
-  lines.push('');
-  
-  // Students and missed lectures
-  lines.push('The following students will be participating in this event and will miss the mentioned lectures:');
-  lines.push('');
-  
-  // Group students by program-section
-  groupedData.forEach((group, groupIndex) => {
-    if (groupIndex > 0) lines.push(''); // Add spacing between groups
-    
-    lines.push(`${group.groupKey}:`);
-    
-    group.students.forEach((student, studentIndex) => {
-      const studentNumber = studentIndex + 1;
-      lines.push(`${studentNumber}. ${student.name}`);
-      
-      if (student.missedLectures.length > 0) {
-        lines.push('   Missed Lectures:');
-        student.missedLectures.forEach(lecture => {
-          lines.push(`   - ${lecture.subject_name} (${lecture.faculty}) - ${lecture.time} - ${lecture.room}`);
-        });
-      } else {
-        lines.push('   No missed lectures for this student.');
-      }
-      
-      if (studentIndex < group.students.length - 1) {
-        lines.push(''); // Add spacing between students
-      }
+  // Group students by program-section and list participants
+  body += `Participants:\n`;
+  groupedData.forEach(group => {
+    body += `\n${group.programSection}:\n`;
+    group.students.forEach(student => {
+      body += `• ${student.name} (${student.program} ${student.section} - Sem ${student.semester})\n`;
     });
   });
   
-  lines.push('');
+  body += `\n`;
   
-  // Request statement
-  lines.push('We kindly request you to grant Official Duty (OD) for the above-mentioned students so that they can participate in this event without any academic penalty.');
-  lines.push('');
+  // Missed lectures section - group by section and then by subject
+  const groupsWithMissedLectures = groupedData.filter(group => 
+    group.students.some(student => student.missedLectures.length > 0)
+  );
   
-  // Closing
-  lines.push('Thank you for your time and consideration. We look forward to your positive response.');
-  lines.push('');
-  lines.push('Regards,');
-  lines.push('[Your Name]');
-  lines.push('[Your Designation]');
-  lines.push('[Department]');
+  if (groupsWithMissedLectures.length > 0) {
+    body += `Missed Lectures:\n\n`;
+    
+    groupsWithMissedLectures.forEach(group => {
+      body += `${group.programSection}:\n`;
+      
+      // Group missed lectures by subject (combining courses and labs)
+      const missedLecturesBySubject = new Map<string, {
+        subject_code: string;
+        subject_name: string;
+        faculty: string;
+        faculty_code: string;
+        time: string;
+        students: string[];
+      }>();
+      
+      group.students.forEach(student => {
+        student.missedLectures.forEach(lecture => {
+          // Create unique key for each subject/faculty/time combination (ignore group for mail)
+          const key = `${lecture.subject_code}-${lecture.subject_name}-${lecture.faculty}-${lecture.time}`;
+          
+          if (!missedLecturesBySubject.has(key)) {
+            missedLecturesBySubject.set(key, {
+              subject_code: lecture.subject_code,
+              subject_name: lecture.subject_name,
+              faculty: lecture.faculty,
+              faculty_code: lecture.faculty_code,
+              time: lecture.time,
+              students: []
+            });
+          }
+          
+          const entry = missedLecturesBySubject.get(key)!;
+          if (!entry.students.includes(student.name)) {
+            entry.students.push(student.name);
+          }
+        });
+      });
+      
+      // Format each missed lecture with proper spacing and formatting
+      missedLecturesBySubject.forEach(lecture => {
+        body += `\n**${lecture.subject_name}**\n`;
+        body += `Faculty: ${lecture.faculty} [${lecture.faculty_code}]\n`;
+        body += `Time: ${lecture.time}\n`;
+        body += `Students:\n`;
+        lecture.students.forEach(studentName => {
+          body += `• ${studentName}\n`;
+        });
+      });
+      
+      body += `\n`;
+    });
+  }
   
-  const body = lines.join('\n');
-  console.log(`📄 Generated email body with ${lines.length} lines`);
+  body += `The students have actively participated in this educational event which contributes to their overall development and learning experience.\n\n`;
+  body += `Please consider granting OD approval for the mentioned students.\n\n`;
+  body += `Thank you for your consideration.\n\n`;
+  body += `Best regards,\n`;
+  body += `${metadata.coordinator}`;
   
   return body;
 }
@@ -132,42 +134,14 @@ function generateEmailBody(
  * Generates mailto URL with encoded subject and body
  * @param subject - Email subject
  * @param body - Email body
- * @returns Mailto URL string
+ * @returns Mailto URL
  */
 function generateMailtoUrl(subject: string, body: string): string {
-  console.log('🔗 Generating mailto URL...');
-  
-  // Get recipient email from environment variable or use default
-  const recipient = process.env.OD_RECIPIENT_EMAIL || 'amiarchive.in@gmail.com';
-  
-  // Encode subject and body for URL
+  const recipient = 'amiarchive.in@gmail.com';
   const encodedSubject = encodeURIComponent(subject);
   const encodedBody = encodeURIComponent(body);
   
-  // Check if body is too long for mailto (some email clients have limits)
-  const maxBodyLength = 2000;
-  let finalBody = encodedBody;
-  let warning = '';
-  
-  if (body.length > maxBodyLength) {
-    console.warn(`⚠️ Email body is ${body.length} characters, which may be too long for some email clients`);
-    warning = 'Note: Email body is quite long. If the mailto link doesn\'t work properly, please copy the content manually.';
-    
-    // Truncate body for mailto URL
-    const truncatedBody = body.substring(0, maxBodyLength - 100) + '\n\n[Content truncated - please see the full report for complete details]';
-    finalBody = encodeURIComponent(truncatedBody);
-  }
-  
-  const mailtoUrl = `mailto:${recipient}?subject=${encodedSubject}&body=${finalBody}`;
-  
-  console.log(`📧 Mailto URL generated for recipient: ${recipient}`);
-  console.log(`📏 Final URL length: ${mailtoUrl.length} characters`);
-  
-  if (warning) {
-    console.warn(`⚠️ ${warning}`);
-  }
-  
-  return mailtoUrl;
+  return `mailto:${recipient}?subject=${encodedSubject}&body=${encodedBody}`;
 }
 
 /**

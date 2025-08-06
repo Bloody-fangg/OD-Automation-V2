@@ -11,12 +11,12 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center overflow-hidden">
+              <div className="w-16 h-16 flex items-center justify-center overflow-hidden">
                 <Image 
                   src="/amity-coding-club-logo.png" 
                   alt="Amity Coding Club Logo" 
-                  width={40} 
-                  height={40}
+                  width={64} 
+                  height={64}
                   className="object-contain"
                 />
               </div>

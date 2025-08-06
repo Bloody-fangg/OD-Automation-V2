@@ -42,6 +42,7 @@ export default function ODGeneratorPage() {
   const [showMailModal, setShowMailModal] = useState(false)
   const [mailSubject, setMailSubject] = useState("")
   const [mailBody, setMailBody] = useState("")
+  const [copyButtonText, setCopyButtonText] = useState("Copy to Clipboard")
 
   const handleFileUpload = async (file: File) => {
     setIsLoading(true)
@@ -146,7 +147,13 @@ export default function ODGeneratorPage() {
 
   const handleCopyMail = () => {
     navigator.clipboard.writeText(`Subject: ${mailSubject}\n\n${mailBody}`)
+    setCopyButtonText("Copied!")
     setSuccess("Mail content copied to clipboard!")
+    
+    // Reset button text after 2 seconds
+    setTimeout(() => {
+      setCopyButtonText("Copy to Clipboard")
+    }, 2000)
   }
 
   const handleSendMail = () => {
@@ -196,9 +203,13 @@ export default function ODGeneratorPage() {
             <div className="mb-6">
               <label className="block text-slate-700 font-semibold mb-2">Body</label>
               <textarea
-                className="w-full border border-slate-300 rounded-lg px-4 py-3 text-slate-800 bg-slate-50 min-h-[350px] focus:outline-none focus:ring-2 focus:ring-yellow-400 text-base"
+                className="w-full border border-slate-300 rounded-lg px-4 py-3 text-slate-800 bg-slate-50 min-h-[350px] focus:outline-none focus:ring-2 focus:ring-yellow-400 text-base scrollbar-thin scrollbar-thumb-slate-400 scrollbar-track-slate-200"
                 value={mailBody}
                 onChange={e => setMailBody(e.target.value)}
+                style={{
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#94a3b8 #e2e8f0'
+                }}
               />
             </div>
             <div className="flex gap-4 justify-end">
@@ -206,7 +217,7 @@ export default function ODGeneratorPage() {
                 onClick={handleCopyMail}
                 className="bg-blue-500 hover:bg-blue-600 text-white font-semibold flex items-center gap-2 px-6 py-3 text-lg"
               >
-                <ClipboardCopy className="w-5 h-5" /> Copy to Clipboard
+                <ClipboardCopy className="w-5 h-5" /> {copyButtonText}
               </Button>
               <Button
                 onClick={handleSendMail}
@@ -230,18 +241,18 @@ export default function ODGeneratorPage() {
               Dashboard
             </Link>
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center overflow-hidden">
-                <Image 
-                  src="/amity-coding-club-logo.png" 
-                  alt="Amity Coding Club Logo" 
-                  width={40} 
-                  height={40}
-                  className="object-contain"
-                />
-              </div>
               <div>
                 <h1 className="text-xl font-bold text-white">OD Generator</h1>
                 <p className="text-sm text-slate-400">Upload & Process</p>
+              </div>
+              <div className="w-16 h-16 flex items-center justify-center overflow-hidden">
+                <Image 
+                  src="/amity-coding-club-logo.png" 
+                  alt="Amity Coding Club Logo" 
+                  width={64} 
+                  height={64}
+                  className="object-contain"
+                />
               </div>
             </div>
           </div>

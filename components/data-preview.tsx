@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, MapPin, User, Clock, GraduationCap } from "lucide-react"
 import type { ParsedExcelData } from "@/types/od"
+import { toTitleCase } from "@/utils/normalizeData"
 
 interface DataPreviewProps {
   eventData: ParsedExcelData
@@ -26,7 +27,7 @@ export function DataPreview({ eventData }: DataPreviewProps) {
               <Calendar className="w-4 h-4 text-yellow-400" />
               <span className="text-sm font-medium text-slate-300">Event</span>
             </div>
-            <p className="text-white font-semibold">{eventData.metadata.eventName}</p>
+            <p className="text-white font-semibold">{toTitleCase(eventData.metadata.eventName)}</p>
           </div>
 
           <div className="bg-slate-700/30 rounded-lg p-4">
@@ -34,7 +35,7 @@ export function DataPreview({ eventData }: DataPreviewProps) {
               <User className="w-4 h-4 text-yellow-400" />
               <span className="text-sm font-medium text-slate-300">Coordinator</span>
             </div>
-            <p className="text-white font-semibold">{eventData.metadata.coordinator}</p>
+            <p className="text-white font-semibold">{toTitleCase(eventData.metadata.coordinator)}</p>
           </div>
 
           <div className="bg-slate-700/30 rounded-lg p-4">
@@ -51,7 +52,7 @@ export function DataPreview({ eventData }: DataPreviewProps) {
               <MapPin className="w-4 h-4 text-yellow-400" />
               <span className="text-sm font-medium text-slate-300">Venue</span>
             </div>
-            <p className="text-white font-semibold">{eventData.metadata.eventVenue}</p>
+            <p className="text-white font-semibold">{toTitleCase(eventData.metadata.eventVenue || eventData.metadata.place)}</p>
           </div>
         </div>
 
@@ -72,6 +73,7 @@ export function DataPreview({ eventData }: DataPreviewProps) {
                   <th className="text-left py-3 px-4 text-slate-300 font-medium">Program</th>
                   <th className="text-left py-3 px-4 text-slate-300 font-medium">Section</th>
                   <th className="text-left py-3 px-4 text-slate-300 font-medium">Semester</th>
+                  <th className="text-left py-3 px-4 text-slate-300 font-medium">Group</th>
                   <th className="text-left py-3 px-4 text-slate-300 font-medium">Missed Lectures</th>
                 </tr>
               </thead>
@@ -82,6 +84,7 @@ export function DataPreview({ eventData }: DataPreviewProps) {
                     <td className="py-3 px-4 text-slate-300">{student.program}</td>
                     <td className="py-3 px-4 text-slate-300">{student.section}</td>
                     <td className="py-3 px-4 text-slate-300">{student.semester}</td>
+                    <td className="py-3 px-4 text-slate-300">{student.group || '-'}</td>
                     <td className="py-3 px-4">
                       {Array.isArray(student.missedLectures) && student.missedLectures.length > 0 ? (
                         <div className="flex flex-wrap gap-1">

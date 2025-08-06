@@ -5,93 +5,96 @@ export interface Student {
   program: string;
   section: string;
   semester: string;
-  normalizedProgram: string; // Normalized version for matching
-  originalData?: {
-    program: string;
-    section: string;
-    semester: string;
-  };
+  group?: string; // Group field for lab matching
+  normalizedProgram: string;
+  originalData: Record<string, any>;
 }
 
 export interface MissedLecture {
+  subject_code: string;
   subject_name: string;
   faculty: string;
+  faculty_code: string; // Empty for now, ready for future expansion
   time: string;
-  room: string;
-  type: 'course' | 'lab'; // To distinguish between courses and labs
+  group?: string; // For labs
+  day: string;
 }
 
 export interface StudentWithMissedLectures extends Student {
   missedLectures: MissedLecture[];
 }
 
-export interface EventMetadata {
-  eventName: string;
-  eventDate: string;
-  eventTime: string;
-  eventVenue: string;
-  organizingDepartment: string;
-  facultyIncharge: string;
-  contactDetails: string;
-  [key: string]: string; // For any additional metadata
-}
-
-export interface GroupedStudentData {
-  groupKey: string; // e.g., "B.Tech CSE - Section A"
-  students: StudentWithMissedLectures[];
-}
-
 export interface TimeSlot {
-  start: number; // Minutes from midnight
-  end: number;   // Minutes from midnight
+  start: string; // HH:MM format
+  end: string; // HH:MM format
 }
 
 export interface Course {
+  subject_code: string;
   subject_name: string;
   faculty: string;
+  faculty_code: string;
+  day: string;
   time: string;
-  room: string;
 }
 
 export interface Lab {
+  subject_code: string;
   subject_name: string;
   faculty: string;
+  faculty_code: string;
+  day: string;
   time: string;
-  room: string;
+  group: string; // Group 1, Group 2, etc.
 }
 
-export interface TimetableSection {
-  courses: Course[];
-  labs: Lab[];
+export interface Section {
+  Courses: Course[];
+  Labs: Lab[];
 }
 
-export interface TimetableSemester {
-  [section: string]: TimetableSection;
-}
-
-export interface TimetableProgram {
-  [semester: string]: TimetableSemester;
+export interface Program {
+  Semester: string;
+  Sections: Record<string, Section>;
 }
 
 export interface Timetable {
-  [program: string]: TimetableProgram;
+  Programs: Record<string, Program>;
 }
 
-export interface ProcessOdResponse {
-  success: boolean;
-  metadata?: EventMetadata;
-  groupedData?: GroupedStudentData[];
-  email?: {
-    subject: string;
-    body: string;
-    mailtoUrl: string;
-  };
-  reportBase64?: string;
-  message?: string;
-  warnings?: string[];
+export interface EventMetadata {
+  eventName: string;
+  coordinator: string;
+  eventDate: string;
+  day: string;
+  eventVenue?: string;
+  place?: string;
+  eventTime: string;
 }
 
 export interface ParsedExcelData {
   metadata: EventMetadata;
   students: Student[];
+}
+
+export interface GroupedStudentData {
+  programSection: string;
+  students: StudentWithMissedLectures[];
+}
+
+export interface ProcessOdResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    metadata: EventMetadata;
+    studentsWithMissed: StudentWithMissedLectures[];
+    groupedStudents: GroupedStudentData[];
+    report: {
+      base64: string;
+      filename: string;
+      isValid: boolean;
+      warnings: string[];
+    };
+  };
+  error?: string;
 }

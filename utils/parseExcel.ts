@@ -75,40 +75,41 @@ const METADATA_FIELDS = [
 ] as const;
 
 /**
- * Parses uploaded Excel file to extract event metadata and student data
- * @param file - The uploaded Excel file
- * @returns Promise<ParsedExcelData> - Parsed metadata and students
- */
-/**
- * Ultra-robust Excel parser for OD automation.
- * Handles fuzzy, partial, and case-insensitive matching for headers and metadata.
- * Dynamically detects header row and normalizes all extracted data.
- * Throws detailed errors for missing columns/metadata.
- * Plug-and-play for OD server action.
+ * Parses Excel file and extracts event metadata and student data
+ * @param file - Excel file
+ * @returns Parsed data with metadata and students
  */
 export async function parseExcel(file: File): Promise<ParsedExcelData> {
-  // 1. Read file and convert to 2D array
-  const arrayBuffer = await file.arrayBuffer();
-  const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-  const sheetName = workbook.SheetNames[0];
-  const worksheet = workbook.Sheets[sheetName];
-  const data: string[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '', raw: false }) as string[][];
-
-  // 2. Extract metadata from top N rows (usually first 6)
-  const metadata = extractEventMetadata(data);
-
-  // 3. Find student header row and column mapping
-  const { headerRowIdx, colMap, detectedHeaders } = findStudentHeaderRowAndMap(data);
-
-  // 4. Extract students from rows below header
-  const students = extractStudents(data, headerRowIdx, colMap);
-
-  // 5. Error reporting
-  if (!students.length) {
-    throw new Error('No student data found below headers.');
+  console.log('📄 Starting Excel parsing...');
+  
+  try {
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: 'buffer' });
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+    
+    console.log(`📊 Excel file loaded with ${rows.length} rows`);
+    
+    // Extract event metadata (rows 2-8)
+    const metadata = extractEventMetadata(rows);
+    console.log('✅ Event metadata extracted:', metadata);
+    
+    // Extract student data (from row 9 onwards)
+    const students = extractStudents(rows);
+    console.log(`✅ Student data extracted: ${students.length} students`);
+    
+    if (students.length === 0) {
+      throw new Error('No valid student data found in the Excel file.');
+    }
+    
+    return {
+      metadata,
+      students
+    };
+  } catch (error) {
+    console.error('❌ Error parsing Excel file:', error);
+    throw new Error(`Failed to parse Excel file: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-
-  return { metadata, students };
 }
 
 /**
@@ -233,37 +234,158 @@ function findStudentHeaderRowAndMap(data: string[][]): {
 }
 
 /**
- * Extracts student rows below the detected header row, normalizing fields.
+ * Finds the header row for student data
+ * @param rows - Excel rows
+ * @returns Index of header row or -1 if not found
  */
-function extractStudents(
-  data: string[][],
-  headerRowIdx: number,
-  colMap: { name: number; program: number; section: number; semester: number }
-): Student[] {
+function findHeaderRow(rows: any[][]): number {
+  // Look for common header patterns
+  const headerKeywords = ['student', 'name', 'program', 'section', 'semester', 'group'];
+  
+  for (let i = 0; i < Math.min(rows.length, 20); i++) { // Check first 20 rows
+    const row = rows[i];
+    if (!row) continue;
+    
+    const rowText = row.map(cell => String(cell || '').toLowerCase()).join(' ');
+    const matches = headerKeywords.filter(keyword => rowText.includes(keyword));
+    
+    if (matches.length >= 3) { // At least 3 header keywords found
+      console.log(`📋 Found header row at index ${i}: ${row.join(', ')}`);
+      return i;
+    }
+  }
+  
+  // Fallback: look for row with "Student Name" or similar
+  for (let i = 0; i < Math.min(rows.length, 20); i++) {
+    const row = rows[i];
+    if (!row) continue;
+    
+    const hasStudentName = row.some(cell => 
+      String(cell || '').toLowerCase().includes('student') && 
+      String(cell || '').toLowerCase().includes('name')
+    );
+    
+    if (hasStudentName) {
+      console.log(`📋 Found header row with "Student Name" at index ${i}`);
+      return i;
+    }
+  }
+  
+  console.log('❌ Could not find student header row');
+  return -1;
+}
+
+/**
+ * Extracts student data from Excel rows
+ * @param rows - Excel rows starting from student data
+ * @returns Array of Student objects
+ */
+function extractStudents(rows: any[][]): Student[] {
+  console.log('📊 Extracting student data...');
+  
+  if (rows.length === 0) {
+    console.log('⚠️  No student rows found');
+    return [];
+  }
+
+  // Find header row (usually row 10 or nearby)
+  const headerRowIndex = findHeaderRow(rows);
+  if (headerRowIndex === -1) {
+    console.log('❌ Could not find student header row');
+    return [];
+  }
+
+  const headerRow = rows[headerRowIndex];
+  console.log('📋 Found headers:', headerRow);
+
+  // Map column indices
+  const colMap = mapStudentColumns(headerRow);
+  console.log('🗂️  Column mapping:', colMap);
+
+  // Extract students from subsequent rows
   const students: Student[] = [];
-  for (let i = headerRowIdx + 1; i < data.length; ++i) {
-    const row = data[i];
-    if (!row || row.every(cell => !String(cell).trim())) continue;
-    const name = toTitleCase(String(row[colMap.name] || '').trim());
-    const rawProgram = String(row[colMap.program] || '').trim();
-    const program = normalizeProgram(rawProgram);
-    const section = String(row[colMap.section] || '').trim().toUpperCase();
-    const semester = String(row[colMap.semester] || '').trim();
-    if (!name && !program && !section && !semester) continue;
-    students.push({
-      name,
-      program,
-      section,
-      semester,
-      normalizedProgram: program,
-      originalData: {
-        program: rawProgram,
+  for (let i = headerRowIndex + 1; i < rows.length; i++) {
+    const row = rows[i];
+    
+    // Skip empty rows
+    if (!row || row.every(cell => !cell || String(cell).trim() === '')) {
+      continue;
+    }
+
+    try {
+      const name = toTitleCase(String(row[colMap.name] || '').trim());
+      const program = String(row[colMap.program] || '').trim();
+      const section = String(row[colMap.section] || '').trim();
+      const semester = String(row[colMap.semester] || '').trim();
+      const group = String(row[colMap.group] || '').trim(); // Extract group
+
+      // Skip if essential fields are missing
+      if (!name || !program || !section || !semester) {
+        console.log(`⚠️  Skipping row ${i + 1}: Missing essential fields`);
+        continue;
+      }
+
+      const student: Student = {
+        name,
+        program,
         section,
         semester,
-      },
-    });
+        group: group || undefined, // Include group if present
+        normalizedProgram: normalizeProgram(program),
+        originalData: {
+          name,
+          program,
+          section,
+          semester,
+          group,
+          ...Object.fromEntries(
+            Object.entries(colMap).map(([key, index]) => [
+              key,
+              row[index] || ''
+            ])
+          )
+        }
+      };
+
+      students.push(student);
+      console.log(`✅ Added student: ${name} (${program} ${section} - Sem ${semester}${group ? ` - Group ${group}` : ''})`);
+    } catch (error) {
+      console.error(`❌ Error processing row ${i + 1}:`, error);
+    }
   }
+
+  console.log(`📈 Extracted ${students.length} students`);
   return students;
+}
+
+/**
+ * Maps student data columns based on header row
+ * @param headerRow - Header row from Excel
+ * @returns Column mapping object
+ */
+function mapStudentColumns(headerRow: any[]): Record<string, number> {
+  const mapping: Record<string, number> = {};
+  
+  headerRow.forEach((header, index) => {
+    if (!header) return;
+    
+    const normalizedHeader = String(header).toLowerCase().replace(/[^a-z]/g, '');
+    
+    // Map common variations
+    if (normalizedHeader.includes('name') || normalizedHeader.includes('student')) {
+      mapping.name = index;
+    } else if (normalizedHeader.includes('program') || normalizedHeader.includes('programme')) {
+      mapping.program = index;
+    } else if (normalizedHeader.includes('section')) {
+      mapping.section = index;
+    } else if (normalizedHeader.includes('semester') || normalizedHeader.includes('sem')) {
+      mapping.semester = index;
+    } else if (normalizedHeader.includes('group')) {
+      mapping.group = index; // Map group column
+    }
+  });
+  
+  return mapping;
 }
 
 /**
