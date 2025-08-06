@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx';
 import { Student, EventMetadata, ParsedExcelData } from '../types/od';
-import { normalizeProgram, cleanText } from './normalizeData';
+import { normalizeProgram, cleanText, toTitleCase } from './normalizeData';
 import { levenshteinDistance } from './stringUtils';
 
 // Type for column mapping
@@ -150,12 +150,23 @@ function extractEventMetadata(data: string[][]): EventMetadata {
     if (!value) continue;
     // Normalize: lowercase, remove spaces, colons, hyphens
     const norm = rawKey.toLowerCase().replace(/[^a-z]/g, '');
+    // Robust: map both 'venue' and 'place' to eventVenue if found
+    if (norm.includes('venue') || norm.includes('place')) {
+      if (!meta.eventVenue) meta.eventVenue = value;
+      if (!meta.place) meta.place = value;
+      continue;
+    }
     for (const [fuzzy, key] of Object.entries(metaKeys)) {
       if (norm.includes(fuzzy)) {
         meta[key] = value;
         break;
       }
     }
+  }
+  // Debug log for venue
+  if (typeof window !== 'undefined') {
+    // eslint-disable-next-line no-console
+    console.log('Venue extracted:', meta.eventVenue, 'Place extracted:', meta.place);
   }
   // Error if none found
   const allMetaFields = [
@@ -233,7 +244,7 @@ function extractStudents(
   for (let i = headerRowIdx + 1; i < data.length; ++i) {
     const row = data[i];
     if (!row || row.every(cell => !String(cell).trim())) continue;
-    const name = String(row[colMap.name] || '').trim();
+    const name = toTitleCase(String(row[colMap.name] || '').trim());
     const rawProgram = String(row[colMap.program] || '').trim();
     const program = normalizeProgram(rawProgram);
     const section = String(row[colMap.section] || '').trim().toUpperCase();

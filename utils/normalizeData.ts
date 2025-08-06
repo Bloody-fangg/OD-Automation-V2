@@ -190,3 +190,17 @@ export function groupStudentsByProgramSection<T extends { normalizedProgram: str
   console.log(`📊 Grouped students into ${groups.size} program-section combinations`);
   return groups;
 }
+
+/**
+ * Converts a string to Title Case (capitalize first letter of each word, rest lowercase)
+ * @param text - Raw text
+ * @returns Title Cased text
+ */
+export function toTitleCase(text: string): string {
+  if (!text) return '';
+  return text
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}

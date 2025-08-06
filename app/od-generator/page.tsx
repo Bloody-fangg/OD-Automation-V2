@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Mail, ArrowLeft, Upload, Download, FileSpreadsheet, CheckCircle, AlertCircle } from "lucide-react"
+import { Mail, ArrowLeft, Upload, Download, FileSpreadsheet, CheckCircle, AlertCircle, XCircle, ClipboardCopy, Send } from "lucide-react"
 import { FileUpload } from "@/components/file-upload"
 import { DataPreview } from "@/components/data-preview"
 import { parseExcel } from "@/utils/parseExcel"
@@ -37,6 +37,10 @@ export default function ODGeneratorPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [gmailWarning, setGmailWarning] = useState<string | null>(null)
+  // Modal state
+  const [showMailModal, setShowMailModal] = useState(false)
+  const [mailSubject, setMailSubject] = useState("")
+  const [mailBody, setMailBody] = useState("")
 
   const handleFileUpload = async (file: File) => {
     setIsLoading(true)
@@ -56,12 +60,43 @@ export default function ODGeneratorPage() {
 
   const handleGenerateMail = () => {
     if (!eventData) return
-    try {
-      generateODMail(eventData)
-      setSuccess("OD mail generated! Check your email client.")
-    } catch (err) {
-      setError("Failed to generate mail")
+    // Compose subject/body for preview
+    const meta = eventData.metadata
+    const students = eventData.students as StudentWithMissedLectures[]
+    const venue = meta.eventVenue || meta.place || ""
+    const subject = `OD Request - ${meta.eventName || ''}`
+    let body = `Dear Faculty,\n\n` +
+      `I hope this email finds you well.\n\n` +
+      `Please grant On Duty (OD) approval for the following students who participated in the event:\n\n` +
+      `Event Name: ${meta.eventName || ''}\n` +
+      `Coordinator: ${meta.coordinator || ''}\n` +
+      `Date: ${meta.eventDate || ''}\n` +
+      `Day: ${meta.day || ''}\n` +
+      `Venue: ${venue}\n` +
+      `Time: ${meta.eventTime || ''}\n\n` +
+      `Participants:\n` +
+      students.map(p => `${p.name} (${p.program} ${p.section} - Sem ${p.semester})`).join("\n") +
+      "\n\n";
+    // Missed lectures if any
+    const missedLecturesInfo = students.map(p => {
+      if (Array.isArray(p.missedLectures) && (p.missedLectures?.length ?? 0) > 0) {
+        return `${p.name}:\n` + p.missedLectures?.map((ml: {
+          subject?: string;
+          subject_name?: string;
+          time?: string;
+        }) =>
+          `- ${ml.subject || ml.subject_name || ''} ${ml.time ? '(' + ml.time + ')' : ''}`
+        ).join("\n")
+      }
+      return ''
+    }).filter(Boolean).join("\n\n")
+    if (missedLecturesInfo) {
+      body += `Missed Lectures:\n${missedLecturesInfo}\n\n`
     }
+    body += `The students have actively participated in this educational event which contributes to their overall development and learning experience.\n\nPlease consider granting OD approval for the mentioned students.\n\nThank you for your consideration.\n\nBest regards,\n${meta.coordinator || ''}`
+    setMailSubject(subject)
+    setMailBody(body)
+    setShowMailModal(true)
   }
 
   const handleGmailDraft = () => {
@@ -108,6 +143,21 @@ export default function ODGeneratorPage() {
     window.open(url, '_blank')
   }
 
+  const handleCopyMail = () => {
+    navigator.clipboard.writeText(`Subject: ${mailSubject}\n\n${mailBody}`)
+    setSuccess("Mail content copied to clipboard!")
+  }
+
+  const handleSendMail = () => {
+    // Use buildGmailComposeUrl for Gmail
+    const { url, tooLong } = buildGmailComposeUrl({ subject: mailSubject, body: mailBody, forceFullGmail: true })
+    if (tooLong) {
+      setGmailWarning("Mail body too long for web draft. Please copy-paste manually.")
+    }
+    window.open(url, '_blank')
+    setShowMailModal(false)
+  }
+
   const handleDownloadReport = () => {
     if (!eventData) return
     const result = exportODReport(eventData)
@@ -120,6 +170,53 @@ export default function ODGeneratorPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+      {/* Mail Preview Modal */}
+      {showMailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full p-10 relative">
+            <button
+              className="absolute top-4 right-4 text-slate-400 hover:text-red-500"
+              onClick={() => setShowMailModal(false)}
+              aria-label="Close"
+            >
+              <XCircle className="w-6 h-6" />
+            </button>
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-slate-800">
+              <Mail className="w-6 h-6 text-yellow-500" /> OD Mail Preview
+            </h2>
+            <div className="mb-6">
+              <label className="block text-slate-700 font-semibold mb-2">Subject</label>
+              <input
+                className="w-full border border-slate-300 rounded-lg px-4 py-3 text-slate-800 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-lg"
+                value={mailSubject}
+                onChange={e => setMailSubject(e.target.value)}
+              />
+            </div>
+            <div className="mb-6">
+              <label className="block text-slate-700 font-semibold mb-2">Body</label>
+              <textarea
+                className="w-full border border-slate-300 rounded-lg px-4 py-3 text-slate-800 bg-slate-50 min-h-[350px] focus:outline-none focus:ring-2 focus:ring-yellow-400 text-base"
+                value={mailBody}
+                onChange={e => setMailBody(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-4 justify-end">
+              <Button
+                onClick={handleCopyMail}
+                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold flex items-center gap-2 px-6 py-3 text-lg"
+              >
+                <ClipboardCopy className="w-5 h-5" /> Copy to Clipboard
+              </Button>
+              <Button
+                onClick={handleSendMail}
+                className="bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-slate-900 font-semibold flex items-center gap-2 px-6 py-3 text-lg"
+              >
+                <Send className="w-5 h-5" /> Send Mail
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <header className="border-b border-slate-700/50 bg-slate-900/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
