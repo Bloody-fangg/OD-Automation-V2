@@ -3,10 +3,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, MapPin, User, Clock, GraduationCap } from "lucide-react"
-import type { EventData } from "@/lib/excel-utils"
+import type { ParsedExcelData } from "@/types/od"
 
 interface DataPreviewProps {
-  eventData: EventData
+  eventData: ParsedExcelData
 }
 
 export function DataPreview({ eventData }: DataPreviewProps) {
@@ -26,7 +26,7 @@ export function DataPreview({ eventData }: DataPreviewProps) {
               <Calendar className="w-4 h-4 text-yellow-400" />
               <span className="text-sm font-medium text-slate-300">Event</span>
             </div>
-            <p className="text-white font-semibold">{eventData.eventName}</p>
+            <p className="text-white font-semibold">{eventData.metadata.eventName}</p>
           </div>
 
           <div className="bg-slate-700/30 rounded-lg p-4">
@@ -34,7 +34,7 @@ export function DataPreview({ eventData }: DataPreviewProps) {
               <User className="w-4 h-4 text-yellow-400" />
               <span className="text-sm font-medium text-slate-300">Coordinator</span>
             </div>
-            <p className="text-white font-semibold">{eventData.coordinator}</p>
+            <p className="text-white font-semibold">{eventData.metadata.coordinator}</p>
           </div>
 
           <div className="bg-slate-700/30 rounded-lg p-4">
@@ -42,8 +42,8 @@ export function DataPreview({ eventData }: DataPreviewProps) {
               <Clock className="w-4 h-4 text-yellow-400" />
               <span className="text-sm font-medium text-slate-300">Date & Time</span>
             </div>
-            <p className="text-white font-semibold">{eventData.date}</p>
-            <p className="text-slate-300 text-sm">{eventData.time}</p>
+            <p className="text-white font-semibold">{eventData.metadata.eventDate}</p>
+            <p className="text-slate-300 text-sm">{eventData.metadata.eventTime}</p>
           </div>
 
           <div className="bg-slate-700/30 rounded-lg p-4">
@@ -51,16 +51,16 @@ export function DataPreview({ eventData }: DataPreviewProps) {
               <MapPin className="w-4 h-4 text-yellow-400" />
               <span className="text-sm font-medium text-slate-300">Venue</span>
             </div>
-            <p className="text-white font-semibold">{eventData.place}</p>
+            <p className="text-white font-semibold">{eventData.metadata.eventVenue}</p>
           </div>
         </div>
 
         {/* Participants Table */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white">Participants ({eventData.participants.length})</h3>
+            <h3 className="text-lg font-semibold text-white">Participants ({eventData.students.length})</h3>
             <Badge variant="secondary" className="bg-yellow-400/20 text-yellow-400">
-              {eventData.participants.filter((p) => p.missedLectures.length > 0).length} with missed lectures
+              {eventData.students.filter((p: any) => Array.isArray(p.missedLectures) && p.missedLectures.length > 0).length} with missed lectures
             </Badge>
           </div>
 
@@ -76,18 +76,18 @@ export function DataPreview({ eventData }: DataPreviewProps) {
                 </tr>
               </thead>
               <tbody>
-                {eventData.participants.map((participant, index) => (
+                {eventData.students.map((student: any, index: number) => (
                   <tr key={index} className="border-b border-slate-700/50 hover:bg-slate-700/20">
-                    <td className="py-3 px-4 text-white font-medium">{participant.name}</td>
-                    <td className="py-3 px-4 text-slate-300">{participant.program}</td>
-                    <td className="py-3 px-4 text-slate-300">{participant.section}</td>
-                    <td className="py-3 px-4 text-slate-300">{participant.semester}</td>
+                    <td className="py-3 px-4 text-white font-medium">{student.name}</td>
+                    <td className="py-3 px-4 text-slate-300">{student.program}</td>
+                    <td className="py-3 px-4 text-slate-300">{student.section}</td>
+                    <td className="py-3 px-4 text-slate-300">{student.semester}</td>
                     <td className="py-3 px-4">
-                      {participant.missedLectures.length > 0 ? (
+                      {Array.isArray(student.missedLectures) && student.missedLectures.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                          {participant.missedLectures.map((lecture, idx) => (
+                          {student.missedLectures.map((lecture: any, idx: number) => (
                             <Badge key={idx} variant="destructive" className="text-xs">
-                              {lecture}
+                              {typeof lecture === 'string' ? lecture : lecture.subject_name || 'Missed Lecture'}
                             </Badge>
                           ))}
                         </div>

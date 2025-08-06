@@ -116,135 +116,59 @@ function findMissedLectures(participant: Participant, eventDay: string, eventTim
   return daySchedule.filter((lecture) => lecture.startsWith(timeSlot.split("-")[0]))
 }
 
-export async function parseExcelFile(file: File): Promise<EventData> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer)
-        const workbook = XLSX.read(data, { type: "array" })
-        const sheetName = workbook.SheetNames[0]
-        const worksheet = workbook.Sheets[sheetName]
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][]
-
-        if (jsonData.length < 3) {
-          throw new Error("Excel file must contain at least event details and participant data")
-        }
-
-        // Parse event details (assuming they're in the first few rows)
-        const eventName = jsonData[0]?.[1] || "Unknown Event"
-        const coordinator = jsonData[1]?.[1] || "Unknown Coordinator"
-        const date = jsonData[2]?.[1] || new Date().toLocaleDateString()
-        const time = jsonData[3]?.[1] || "9:00 AM"
-        const place = jsonData[4]?.[1] || "Unknown Venue"
-
-        // Find participant data (look for headers)
-        let participantStartRow = -1
-        for (let i = 0; i < jsonData.length; i++) {
-          const row = jsonData[i]
-          if (
-            row &&
-            row.some(
-              (cell) =>
-                typeof cell === "string" &&
-                (cell.toLowerCase().includes("name") || cell.toLowerCase().includes("student")),
-            )
-          ) {
-            participantStartRow = i
-            break
-          }
-        }
-
-        if (participantStartRow === -1) {
-          throw new Error("Could not find participant data in the Excel file")
-        }
-
-        const headers = jsonData[participantStartRow].map((h) => h?.toString().toLowerCase() || "")
-        const nameIndex = headers.findIndex((h) => h.includes("name"))
-        const programIndex = headers.findIndex((h) => h.includes("program") || h.includes("course"))
-        const sectionIndex = headers.findIndex((h) => h.includes("section"))
-        const semesterIndex = headers.findIndex((h) => h.includes("semester") || h.includes("sem"))
-
-        if (nameIndex === -1 || programIndex === -1 || sectionIndex === -1 || semesterIndex === -1) {
-          throw new Error("Required columns (Name, Program, Section, Semester) not found")
-        }
-
-        const participants: Participant[] = []
-        const eventDay = getDayFromDate(date)
-
-        for (let i = participantStartRow + 1; i < jsonData.length; i++) {
-          const row = jsonData[i]
-          if (!row || !row[nameIndex]) continue
-
-          const participant: Participant = {
-            name: row[nameIndex]?.toString() || "",
-            program: row[programIndex]?.toString() || "",
-            section: row[sectionIndex]?.toString() || "",
-            semester: row[semesterIndex]?.toString() || "",
-            missedLectures: [],
-          }
-
-          if (participant.name.trim()) {
-            participant.missedLectures = findMissedLectures(participant, eventDay, time)
-            participants.push(participant)
-          }
-        }
-
-        if (participants.length === 0) {
-          throw new Error("No valid participant data found")
-        }
-
-        resolve({
-          eventName,
-          coordinator,
-          date,
-          time,
-          place,
-          participants,
-        })
-      } catch (error) {
-        reject(new Error(`Failed to parse Excel file: ${error instanceof Error ? error.message : "Unknown error"}`))
-      }
-    }
-
-    reader.onerror = () => reject(new Error("Failed to read file"))
-    reader.readAsArrayBuffer(file)
-  })
+/**
+ * DEPRECATED: Use parseExcel from utils/parseExcel.ts for robust OD Excel parsing.
+ * This function is kept for legacy reference only.
+ */
+// @deprecated
+export async function parseExcelFile(_file: File): Promise<EventData> {
+  throw new Error('parseExcelFile is deprecated. Use parseExcel from utils/parseExcel.ts instead.');
 }
 
-export function generateODMail(eventData: EventData) {
-  const subject = `OD Request - ${eventData.eventName}`
+// Accepts either EventData (legacy) or ParsedExcelData (robust)
+import type { ParsedExcelData } from "@/types/od"
 
-  const participantsList = eventData.participants
+type ODInput = EventData | ParsedExcelData
+
+function isParsedExcelData(data: any): data is ParsedExcelData {
+  return data && data.metadata && Array.isArray(data.students);
+}
+
+export function generateODMail(eventData: ODInput) {
+  // Map robust ParsedExcelData to legacy fields for compatibility
+  const meta = isParsedExcelData(eventData) ? eventData.metadata : eventData;
+  const students = isParsedExcelData(eventData) ? eventData.students : (eventData as EventData).participants;
+
+  const subject = `OD Request - ${'eventName' in meta ? meta.eventName : ''}`;
+
+  const participantsList = students
     .map((p) => `${p.name} (${p.program} ${p.section} - Sem ${p.semester})`)
-    .join("\n")
+    .join("\n");
 
-  const missedLecturesInfo = eventData.participants
-    .filter((p) => p.missedLectures.length > 0)
-    .map((p) => `${p.name}: ${p.missedLectures.join(", ")}`)
-    .join("\n")
+  const missedLecturesInfo = students
+    .filter((p: any) => Array.isArray(p.missedLectures) && p.missedLectures.length > 0)
+    .map((p: any) => `${p.name}: ${p.missedLectures.map((ml: any) => typeof ml === 'string' ? ml : ml.subject_name || 'Missed Lecture').join(", ")}`)
+    .join("\n");
 
   const body = `Dear Faculty,
 
 I hope this email finds you well.
 
-I am writing to request On Duty (OD) approval for the following students who participated in "${eventData.eventName}" organized by the Amity Coding Club.
+I am writing to request On Duty (OD) approval for the following students who participated in "${'eventName' in meta ? meta.eventName : ''}" organized by the Amity Coding Club.
 
 Event Details:
-- Event Name: ${eventData.eventName}
-- Coordinator: ${eventData.coordinator}
-- Date: ${eventData.date}
-- Time: ${eventData.time}
-- Venue: ${eventData.place}
+- Event Name: ${'eventName' in meta ? meta.eventName : ''}
+- Coordinator: ${'coordinator' in meta ? meta.coordinator : ('facultyIncharge' in meta ? meta.facultyIncharge : '')}
+- Date: ${'eventDate' in meta ? meta.eventDate : ('date' in meta ? meta.date : '')}
+- Time: ${'eventTime' in meta ? meta.eventTime : ('time' in meta ? meta.time : '')}
+- Venue: ${'eventVenue' in meta ? meta.eventVenue : ('place' in meta ? meta.place : '')}
 
 Participating Students:
 ${participantsList}
 
 ${
   missedLecturesInfo
-    ? `Missed Lectures:
-${missedLecturesInfo}`
+    ? `Missed Lectures:\n${missedLecturesInfo}`
     : "No lecture conflicts detected."
 }
 
@@ -255,35 +179,41 @@ Please consider granting OD approval for the mentioned students.
 Thank you for your consideration.
 
 Best regards,
-${eventData.coordinator}
-Amity Coding Club`
+${'coordinator' in meta ? meta.coordinator : ('facultyIncharge' in meta ? meta.facultyIncharge : '')}
+Amity Coding Club`;
 
-  const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-  window.open(mailtoLink)
+  const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.open(mailtoLink);
 }
 
-export function generateODReport(eventData: EventData) {
+export function generateODReport(eventData: ODInput) {
+  // Map robust ParsedExcelData to legacy fields for compatibility
+  const meta = isParsedExcelData(eventData) ? eventData.metadata : eventData;
+  const students = isParsedExcelData(eventData) ? eventData.students : (eventData as EventData).participants;
+
   const reportData = [
-    ["OD Report - " + eventData.eventName],
+    ["OD Report - " + ('eventName' in meta ? meta.eventName : '')],
     ["Generated on: " + new Date().toLocaleDateString()],
     [],
     ["Event Details"],
-    ["Event Name", eventData.eventName],
-    ["Coordinator", eventData.coordinator],
-    ["Date", eventData.date],
-    ["Time", eventData.time],
-    ["Venue", eventData.place],
+    ["Event Name", 'eventName' in meta ? meta.eventName : ''],
+    ["Coordinator", 'coordinator' in meta ? meta.coordinator : ('facultyIncharge' in meta ? meta.facultyIncharge : '')],
+    ["Date", 'eventDate' in meta ? meta.eventDate : ('date' in meta ? meta.date : '')],
+    ["Time", 'eventTime' in meta ? meta.eventTime : ('time' in meta ? meta.time : '')],
+    ["Venue", 'eventVenue' in meta ? meta.eventVenue : ('place' in meta ? meta.place : '')],
     [],
     ["Participant Details"],
     ["Name", "Program", "Section", "Semester", "Missed Lectures"],
-    ...eventData.participants.map((p) => [
+    ...students.map((p: any) => [
       p.name,
       p.program,
       p.section,
       p.semester,
-      p.missedLectures.join(", ") || "None",
+      Array.isArray(p.missedLectures) && p.missedLectures.length > 0
+        ? p.missedLectures.map((ml: any) => typeof ml === 'string' ? ml : ml.subject_name || 'Missed Lecture').join(", ")
+        : "None",
     ]),
-  ]
+  ];
 
   const ws = XLSX.utils.aoa_to_sheet(reportData)
   const wb = XLSX.utils.book_new()

@@ -5,18 +5,38 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Mail, ArrowLeft, Upload, Download, FileSpreadsheet, CheckCircle, AlertCircle } from "lucide-react"
 import { FileUpload } from "@/components/file-upload"
 import { DataPreview } from "@/components/data-preview"
-import { processOdRequest } from "@/app/actions/processOd"
-import type { ProcessResult } from "@/lib/types"
+import { parseExcel } from "@/utils/parseExcel"
+/**
+ * Existing imports
+ */
+import { generateODMail } from "@/lib/excel-utils"
+import { buildGmailComposeUrl } from "@/lib/gmail-url-builder"
+import { exportODReport } from "@/lib/report-exporter"
+import type { ParsedExcelData } from "@/types/od"
+
+type StudentWithMissedLectures = {
+  name: string;
+  program: string;
+  section: string;
+  semester: string;
+  missedLectures?: Array<{
+    subject?: string;
+    subject_name?: string;
+    faculty?: string;
+    time?: string;
+    room?: string;
+  }>;
+};
 
 export default function ODGeneratorPage() {
-  const [processResult, setProcessResult] = useState<ProcessResult | null>(null)
+  const [eventData, setEventData] = useState<ParsedExcelData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [gmailWarning, setGmailWarning] = useState<string | null>(null)
 
   const handleFileUpload = async (file: File) => {
     setIsLoading(true)
@@ -24,89 +44,78 @@ export default function ODGeneratorPage() {
     setSuccess(null)
 
     try {
-      const result = await processOdRequest(file)
-      setProcessResult(result)
-      setSuccess(`File processed successfully! Found ${result.totalStudents} students with ${result.totalMissedLectures} missed lectures.`)
+      const data = await parseExcel(file)
+      setEventData(data)
+      setSuccess("File uploaded and parsed successfully!")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to process file")
+      setError(err instanceof Error ? err.message : "Failed to parse file")
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleGenerateMail = () => {
-    if (!processResult) return
-
+    if (!eventData) return
     try {
-      // Open the mailto URL
-      window.open(processResult.email.mailtoUrl, '_blank')
-      setSuccess("OD mail opened in your email client!")
+      generateODMail(eventData)
+      setSuccess("OD mail generated! Check your email client.")
     } catch (err) {
-      setError("Failed to open email client")
+      setError("Failed to generate mail")
     }
+  }
+
+  const handleGmailDraft = () => {
+    if (!eventData) return
+    setGmailWarning(null)
+    // Compose subject/body as in generateODMail
+    const meta = eventData.metadata
+    const students = eventData.students as StudentWithMissedLectures[]
+    const subject = `OD Request - ${meta.eventName || ''}`
+    let body = `Dear Faculty,\n\n` +
+      `I hope this email finds you well.\n\n` +
+      `Please grant On Duty (OD) approval for the following students who participated in the event:\n\n` +
+      `Event Name: ${meta.eventName || ''}\n` +
+      `Coordinator: ${meta.coordinator || ''}\n` +
+      `Date: ${meta.eventDate || ''}\n` +
+      `Day: ${meta.day || ''}\n` +
+      `Place: ${meta.place || ''}\n` +
+      `Time: ${meta.eventTime || ''}\n\n` +
+      `Participants:\n` +
+      students.map(p => `${p.name} (${p.program} ${p.section} - Sem ${p.semester})`).join("\n") +
+      "\n\n";
+    // Missed lectures if any
+    const missedLecturesInfo = students.map(p => {
+      if (Array.isArray(p.missedLectures) && (p.missedLectures?.length ?? 0) > 0) {
+        return `${p.name}:\n` + p.missedLectures?.map((ml: {
+          subject?: string;
+          subject_name?: string;
+          time?: string;
+        }) =>
+          `- ${ml.subject || ml.subject_name || ''} ${ml.time ? '(' + ml.time + ')' : ''}`
+        ).join("\n")
+      }
+      return ''
+    }).filter(Boolean).join("\n\n")
+    if (missedLecturesInfo) {
+      body += `Missed Lectures:\n${missedLecturesInfo}\n\n`
+    }
+    body += `The students have actively participated in this educational event which contributes to their overall development and learning experience.\n\nPlease consider granting OD approval for the mentioned students.\n\nThank you for your consideration.\n\nBest regards,\n${meta.coordinator || ''}`
+
+    const { url, tooLong } = buildGmailComposeUrl({ subject, body })
+    if (tooLong) {
+      setGmailWarning("Mail body too long for web draft. Please copy-paste manually.")
+    }
+    window.open(url, '_blank')
   }
 
   const handleDownloadReport = () => {
-    if (!processResult) return
-
-    try {
-      // For now, we'll create a simple CSV download
-      // In a real implementation, you'd use the server action to generate the report
-      const csvContent = generateCSVReport(processResult)
-      downloadCSV(csvContent, `OD_Report_${processResult.metadata.eventName}_${processResult.metadata.date}.csv`)
+    if (!eventData) return
+    const result = exportODReport(eventData)
+    if (!result.success) {
+      setError(result.error || "Failed to generate report")
+    } else {
       setSuccess("OD report downloaded successfully!")
-    } catch (err) {
-      setError("Failed to generate report")
     }
-  }
-
-  const generateCSVReport = (result: ProcessResult): string => {
-    const headers = ["Student Name", "Program", "Section", "Semester", "Missed Lectures", "Faculty", "Room", "Time"]
-    const rows = [headers.join(",")]
-
-    result.studentsWithMissed.forEach(student => {
-      if (student.missedLectures.length > 0) {
-        student.missedLectures.forEach(lecture => {
-          const row = [
-            student.name,
-            student.program,
-            student.section,
-            student.semester,
-            `${lecture.subject_code} - ${lecture.subject_name}`,
-            lecture.faculty,
-            lecture.room,
-            lecture.time
-          ].map(field => `"${field}"`).join(",")
-          rows.push(row)
-        })
-      } else {
-        const row = [
-          student.name,
-          student.program,
-          student.section,
-          student.semester,
-          "No conflicts",
-          "",
-          "",
-          ""
-        ].map(field => `"${field}"`).join(",")
-        rows.push(row)
-      }
-    })
-
-    return rows.join("\n")
-  }
-
-  const downloadCSV = (content: string, filename: string) => {
-    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', filename)
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
   }
 
   return (
@@ -174,47 +183,10 @@ export default function ODGeneratorPage() {
                 <div className="mt-6 p-4 bg-slate-700/30 rounded-lg">
                   <h4 className="text-sm font-semibold text-white mb-2">Expected Excel Format:</h4>
                   <ul className="text-sm text-slate-300 space-y-1">
-                    <li>• Rows 2-7: Event metadata (Name, Coordinator, Date, Day, Place, Time)</li>
-                    <li>• Row 10: Headers (Student Name, Program, Section, Semester)</li>
-                    <li>• Row 11+: Student data</li>
-                    <li>• Time format: 9:15-10:10_10:15-11:10 (multiple slots separated by _)</li>
+                    <li>• Event Name, Coordinator, Date, Time, Place</li>
+                    <li>• Student columns: Name, Program, Section, Semester</li>
                     <li>• Supports .xlsx format only</li>
                   </ul>
-                  
-                  <div className="mt-4 pt-4 border-t border-slate-600">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white bg-transparent"
-                      onClick={() => {
-                        // Create a simple CSV template for now
-                        const templateContent = `Event Name:,Hack@Amity
-Coordinator:,Dr. XYZ
-Event Date:,02-08-2025
-Day:,Monday
-Place:,D Block Seminar Hall
-Event Time:,9:15-10:10_10:15-11:10_14:15-15:10
-,,,
-Student Name,Program,Section,Semester
-Adarsh Singh,CSE,A,2
-Aryan Tomar,IT,D,8
-Namma Singh,BCA,E,6`
-                        
-                        const blob = new Blob([templateContent], { type: 'text/csv;charset=utf-8;' })
-                        const link = document.createElement('a')
-                        const url = URL.createObjectURL(blob)
-                        link.setAttribute('href', url)
-                        link.setAttribute('download', 'OD_Template.csv')
-                        link.style.visibility = 'hidden'
-                        document.body.appendChild(link)
-                        link.click()
-                        document.body.removeChild(link)
-                      }}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Download Template
-                    </Button>
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -230,7 +202,7 @@ Namma Singh,BCA,E,6`
               <CardContent className="space-y-4">
                 <Button
                   onClick={handleGenerateMail}
-                  disabled={!processResult}
+                  disabled={!eventData}
                   className="w-full bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-slate-900 font-semibold py-3 rounded-xl transition-all duration-300"
                 >
                   <Mail className="w-5 h-5 mr-2" />
@@ -238,14 +210,30 @@ Namma Singh,BCA,E,6`
                 </Button>
 
                 <Button
+                  onClick={handleGmailDraft}
+                  disabled={!eventData}
+                  className="w-full bg-gradient-to-r from-red-400 to-red-600 hover:from-red-500 hover:to-red-700 text-white font-semibold py-3 rounded-xl transition-all duration-300"
+                >
+                  <Mail className="w-5 h-5 mr-2" />
+                  Open in Gmail
+                </Button>
+
+                <Button
                   onClick={handleDownloadReport}
-                  disabled={!processResult}
+                  disabled={!eventData}
                   variant="outline"
                   className="w-full border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white py-3 rounded-xl transition-all duration-300 bg-transparent"
                 >
                   <Download className="w-5 h-5 mr-2" />
                   Download OD Report
                 </Button>
+
+                {gmailWarning && (
+                  <Alert className="mt-4 border-yellow-500/50 bg-yellow-500/10">
+                    <AlertCircle className="h-4 w-4 text-yellow-400" />
+                    <AlertDescription className="text-yellow-300">{gmailWarning}</AlertDescription>
+                  </Alert>
+                )}
 
                 <div className="p-4 bg-slate-700/30 rounded-lg">
                   <h4 className="text-sm font-semibold text-white mb-2">What happens next:</h4>
@@ -255,29 +243,14 @@ Namma Singh,BCA,E,6`
                     <li>• All data processed locally</li>
                   </ul>
                 </div>
-
-                {/* Processing Stats */}
-                {processResult && (
-                  <div className="p-4 bg-slate-700/30 rounded-lg">
-                    <h4 className="text-sm font-semibold text-white mb-2">Processing Results:</h4>
-                    <ul className="text-sm text-slate-300 space-y-1">
-                      <li>• Total Students: {processResult.totalStudents}</li>
-                      <li>• Missed Lectures: {processResult.totalMissedLectures}</li>
-                      <li>• Processing Time: {processResult.processingTime}ms</li>
-                      {processResult.unmatched.length > 0 && (
-                        <li>• Unmatched: {processResult.unmatched.length} students</li>
-                      )}
-                    </ul>
-                  </div>
-                )}
               </CardContent>
             </Card>
           </div>
 
           {/* Data Preview */}
-          {processResult && (
+          {eventData && (
             <div className="mt-8">
-              <DataPreview eventData={processResult} />
+              <DataPreview eventData={eventData} />
             </div>
           )}
         </div>
